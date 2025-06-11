@@ -1,17 +1,58 @@
-# ActiveMatcher: Matching for Entity Matching
+# madmatcher-tools
 
-Welcome to ActiveMatcher! ActiveMatcher is a machine learning system specialized for
-entity matching built on top of Apache Spark.
+Tools for entity matching and record linkage, providing a flexible and scalable solution for matching and linking records across datasets.
 
-### Installation
+## Features
 
-See instructions to install ActiveMatcher on [a single machine](https://github.com/anhaidgroup/active_matcher/tree/docs/doc/installation-guides)  or [a cloud-based cluster](https://github.com/anhaidgroup/active_matcher/blob/docs/doc/installation-guides/install-cloud-based-cluster.md). 
+- Machine learning models for entity matching (both scikit-learn and PySpark)
+- Active learning for efficient labeling
+- Feature engineering and vectorization
+- Data storage and management
+- CLI-based labeling interface
 
-### How to Use
+## Installation
 
-See examples on [using ActiveMatcher on a single machine](https://github.com/anhaidgroup/active_matcher/blob/docs/examples/Single-Machine-Example.md) and a [cluster](https://github.com/anhaidgroup/active_matcher/blob/docs/examples/Cluster-Example.md). 
+You can install madmatcher-tools using pip:
 
-### Further Pointers
+```bash
+pip install madmatcher-tools
+```
 
-See [API documentation](). 
-For questions / comments, contact [our research group](mailto:entitymatchinginfo@gmail.com).
+For development, install with additional dependencies:
+
+```bash
+pip install -e ".[dev]"
+```
+
+## Quick Start
+
+Here's a simple example of using madmatcher-tools:
+
+```python
+from madmatcher_tools import SKLearnModel, CLILabeler
+from sklearn.ensemble import HistGradientBoostingClassifier
+
+# Create and train a model
+model = SKLearnModel(HistGradientBoostingClassifier())
+model.train(training_data, vector_col='features', label_column='label')
+
+# Make predictions
+predictions = model.predict(test_data, vector_col='features', output_col='prediction')
+```
+
+## Documentation
+
+For detailed documentation, visit our [Read the Docs page](https://madmatcher-tools.readthedocs.io/).
+
+## Development
+
+To set up the development environment:
+
+1. Clone the repository
+2. Install development dependencies: `pip install -e ".[dev]"`
+3. Run tests: `pytest`
+4. Build documentation: `cd docs && make html`
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

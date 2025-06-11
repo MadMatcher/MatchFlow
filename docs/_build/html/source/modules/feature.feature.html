@@ -1,0 +1,196 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>feature.feature module &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">feature.feature module</a><ul>
+<li><a class="reference internal" href="#feature.feature.EditDistanceFeature"><code class="docutils literal notranslate"><span class="pre">EditDistanceFeature</span></code></a></li>
+<li><a class="reference internal" href="#feature.feature.ExactMatchFeature"><code class="docutils literal notranslate"><span class="pre">ExactMatchFeature</span></code></a></li>
+<li><a class="reference internal" href="#feature.feature.Feature"><code class="docutils literal notranslate"><span class="pre">Feature</span></code></a><ul>
+<li><a class="reference internal" href="#feature.feature.Feature.a_attr"><code class="docutils literal notranslate"><span class="pre">Feature.a_attr</span></code></a></li>
+<li><a class="reference internal" href="#feature.feature.Feature.b_attr"><code class="docutils literal notranslate"><span class="pre">Feature.b_attr</span></code></a></li>
+<li><a class="reference internal" href="#feature.feature.Feature.build"><code class="docutils literal notranslate"><span class="pre">Feature.build()</span></code></a></li>
+<li><a class="reference internal" href="#feature.feature.Feature.preprocess"><code class="docutils literal notranslate"><span class="pre">Feature.preprocess()</span></code></a></li>
+<li><a class="reference internal" href="#feature.feature.Feature.preprocess_output_column"><code class="docutils literal notranslate"><span class="pre">Feature.preprocess_output_column()</span></code></a></li>
+<li><a class="reference internal" href="#feature.feature.Feature.template"><code class="docutils literal notranslate"><span class="pre">Feature.template()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#feature.feature.NeedlemanWunschFeature"><code class="docutils literal notranslate"><span class="pre">NeedlemanWunschFeature</span></code></a></li>
+<li><a class="reference internal" href="#feature.feature.RelDiffFeature"><code class="docutils literal notranslate"><span class="pre">RelDiffFeature</span></code></a></li>
+<li><a class="reference internal" href="#feature.feature.SmithWatermanFeature"><code class="docutils literal notranslate"><span class="pre">SmithWatermanFeature</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">feature.feature module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/source/modules/feature.feature.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-feature.feature">
+<span id="feature-feature-module"></span><h1>feature.feature module<a class="headerlink" href="#module-feature.feature" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="feature.feature.EditDistanceFeature">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">feature.feature.</span></span><span class="sig-name descname"><span class="pre">EditDistanceFeature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_attr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_attr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/feature/feature.html#EditDistanceFeature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#feature.feature.EditDistanceFeature" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#feature.feature.Feature" title="feature.feature.Feature"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feature</span></code></a></p>
+<p>edit distance between two strings, case insensitive</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="feature.feature.ExactMatchFeature">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">feature.feature.</span></span><span class="sig-name descname"><span class="pre">ExactMatchFeature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_attr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_attr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/feature/feature.html#ExactMatchFeature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#feature.feature.ExactMatchFeature" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#feature.feature.Feature" title="feature.feature.Feature"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feature</span></code></a></p>
+<p>Case insensitive exact string match</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="feature.feature.Feature">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">feature.feature.</span></span><span class="sig-name descname"><span class="pre">Feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_attr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_attr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/feature/feature.html#Feature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#feature.feature.Feature" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="feature.feature.Feature.a_attr">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">a_attr</span></span><a class="headerlink" href="#feature.feature.Feature.a_attr" title="Link to this definition">¶</a></dt>
+<dd><p>the name of the attribute from table a used to generate this feature</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="feature.feature.Feature.b_attr">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">b_attr</span></span><a class="headerlink" href="#feature.feature.Feature.b_attr" title="Link to this definition">¶</a></dt>
+<dd><p>the name of the attribute from table a used to generate this feature</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="feature.feature.Feature.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/feature/feature.html#Feature.build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#feature.feature.Feature.build" title="Link to this definition">¶</a></dt>
+<dd><p>Guarenteed to be called before the features preprocessing is done.
+this method should generate and store all of the metadata required to
+compute the features over A and B, NOTE B may be None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="feature.feature.Feature.preprocess">
+<span class="sig-name descname"><span class="pre">preprocess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_table_a</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/feature/feature.html#Feature.preprocess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#feature.feature.Feature.preprocess" title="Link to this definition">¶</a></dt>
+<dd><p>preprocess the data, adding the output column to data</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="feature.feature.Feature.preprocess_output_column">
+<span class="sig-name descname"><span class="pre">preprocess_output_column</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">for_table_a</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/feature/feature.html#Feature.preprocess_output_column"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#feature.feature.Feature.preprocess_output_column" title="Link to this definition">¶</a></dt>
+<dd><p>get the name of the preprocessing output column for table A or B</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="feature.feature.Feature.template">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">template</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/feature/feature.html#Feature.template"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#feature.feature.Feature.template" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="feature.feature.NeedlemanWunschFeature">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">feature.feature.</span></span><span class="sig-name descname"><span class="pre">NeedlemanWunschFeature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_attr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_attr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/feature/feature.html#NeedlemanWunschFeature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#feature.feature.NeedlemanWunschFeature" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#feature.feature.Feature" title="feature.feature.Feature"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feature</span></code></a></p>
+<p>needleman_wunch between two strings, case insensitive</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="feature.feature.RelDiffFeature">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">feature.feature.</span></span><span class="sig-name descname"><span class="pre">RelDiffFeature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_attr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_attr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/feature/feature.html#RelDiffFeature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#feature.feature.RelDiffFeature" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#feature.feature.Feature" title="feature.feature.Feature"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feature</span></code></a></p>
+<p>relative difference between two values</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="feature.feature.SmithWatermanFeature">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">feature.feature.</span></span><span class="sig-name descname"><span class="pre">SmithWatermanFeature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a_attr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_attr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/feature/feature.html#SmithWatermanFeature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#feature.feature.SmithWatermanFeature" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#feature.feature.Feature" title="feature.feature.Feature"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feature</span></code></a></p>
+<p>smith waterman between two strings, case insensitive</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

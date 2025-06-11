@@ -1,0 +1,197 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>featurization module &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">featurization module</a><ul>
+<li><a class="reference internal" href="#featurization.BuildCache"><code class="docutils literal notranslate"><span class="pre">BuildCache</span></code></a><ul>
+<li><a class="reference internal" href="#featurization.BuildCache.add_or_get"><code class="docutils literal notranslate"><span class="pre">BuildCache.add_or_get()</span></code></a></li>
+<li><a class="reference internal" href="#featurization.BuildCache.clear"><code class="docutils literal notranslate"><span class="pre">BuildCache.clear()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#featurization.create_features"><code class="docutils literal notranslate"><span class="pre">create_features()</span></code></a></li>
+<li><a class="reference internal" href="#featurization.featurize"><code class="docutils literal notranslate"><span class="pre">featurize()</span></code></a></li>
+<li><a class="reference internal" href="#featurization.score"><code class="docutils literal notranslate"><span class="pre">score()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">featurization module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/source/modules/featurization.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-featurization">
+<span id="featurization-module"></span><h1>featurization module<a class="headerlink" href="#module-featurization" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="featurization.BuildCache">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">featurization.</span></span><span class="sig-name descname"><span class="pre">BuildCache</span></span><a class="reference internal" href="../../_modules/featurization.html#BuildCache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#featurization.BuildCache" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="featurization.BuildCache.add_or_get">
+<span class="sig-name descname"><span class="pre">add_or_get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">builder</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/featurization.html#BuildCache.add_or_get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#featurization.BuildCache.add_or_get" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="featurization.BuildCache.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/featurization.html#BuildCache.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#featurization.BuildCache.clear" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="featurization.create_features">
+<span class="sig-prename descclassname"><span class="pre">featurization.</span></span><span class="sig-name descname"><span class="pre">create_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_cols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_cols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_functions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">null_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/featurization.html#create_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#featurization.create_features" title="Link to this definition">¶</a></dt>
+<dd><p>creates the features which will be used to featurize your tuple pairs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>pandas DataFrame</em>) – the records of table A</p></li>
+<li><p><strong>B</strong> (<em>pandas DataFrame</em>) – the records of table B</p></li>
+<li><p><strong>a_cols</strong> (<em>list</em>) – The names of the columns for DataFrame A that should have features generated</p></li>
+<li><p><strong>b_cols</strong> (<em>list</em>) – The names of the columns for DataFrame B that should have features generated</p></li>
+<li><p><strong>sim_functions</strong> (<em>list</em><em> of </em><em>callables</em><em>, </em><em>optional</em>) – similarity functions to apply (default: None)</p></li>
+<li><p><strong>tokenizers</strong> (<em>list</em><em> of </em><em>callables</em><em>, </em><em>optional</em>) – tokenizers to use (default: None)</p></li>
+<li><p><strong>null_threshold</strong> (<em>float</em>) – the portion of values that must be null in order for the column to be dropped and
+not considered for feature generation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a DataFrame containing initialized feature objects for columns in A, B</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="featurization.featurize">
+<span class="sig-prename descclassname"><span class="pre">featurization.</span></span><span class="sig-name descname"><span class="pre">featurize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'features'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_na</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/featurization.html#featurize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#featurization.featurize" title="Link to this definition">¶</a></dt>
+<dd><p>applies the featurizer to the record pairs in candidates</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>features</strong> (<em>List</em><em>[</em><em>Callable</em><em>]</em>) – a DataFrame containing initialized feature objects for columns in A, B</p></li>
+<li><p><strong>A</strong> (<em>pandas DataFrame</em>) – the records of table A</p></li>
+<li><p><strong>B</strong> (<em>pandas DataFrame</em>) – the records of table B</p></li>
+<li><p><strong>candidates</strong> (<em>pandas DataFrame</em>) – id pairs of A and B that are potential matches</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – the name of the column for the resulting feature vectors, default <cite>fvs</cite></p></li>
+<li><p><strong>fill_na</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></span>) – value to fill in for missing data, default None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with feature vectors created with the following schema:
+(<cite>id2</cite>, <cite>id1</cite>, <cite>fv</cite>, other columns from candidates)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="featurization.score">
+<span class="sig-prename descclassname"><span class="pre">featurization.</span></span><span class="sig-name descname"><span class="pre">score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fvs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/featurization.html#score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#featurization.score" title="Link to this definition">¶</a></dt>
+<dd><p>computes a score by summing up the positively correlated features score in the feature vectors</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fvs</strong> (<em>pandas DataFrame</em>) – DataFrame with feature vectors created with the following schema:
+(<cite>id2</cite>, <cite>id1</cite>, <cite>fv</cite>, other columns from candidates)</p></li>
+<li><p><strong>features</strong> (<em>pandas DataFrame</em>) – a DataFrame containing initialized feature objects for columns in A, B</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,146 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tests.unit.test_tools module &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">tests.unit.test_tools module</a><ul>
+<li><a class="reference internal" href="#tests.unit.test_tools.MockLabeler"><code class="docutils literal notranslate"><span class="pre">MockLabeler</span></code></a></li>
+<li><a class="reference internal" href="#tests.unit.test_tools.sample_feature_vectors"><code class="docutils literal notranslate"><span class="pre">sample_feature_vectors()</span></code></a></li>
+<li><a class="reference internal" href="#tests.unit.test_tools.test_apply_matcher"><code class="docutils literal notranslate"><span class="pre">test_apply_matcher()</span></code></a></li>
+<li><a class="reference internal" href="#tests.unit.test_tools.test_down_sample"><code class="docutils literal notranslate"><span class="pre">test_down_sample()</span></code></a></li>
+<li><a class="reference internal" href="#tests.unit.test_tools.test_select_seeds"><code class="docutils literal notranslate"><span class="pre">test_select_seeds()</span></code></a></li>
+<li><a class="reference internal" href="#tests.unit.test_tools.test_train_matcher"><code class="docutils literal notranslate"><span class="pre">test_train_matcher()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">tests.unit.test_tools module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/source/modules/tests.unit.test_tools.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-tests.unit.test_tools">
+<span id="tests-unit-test-tools-module"></span><h1>tests.unit.test_tools module<a class="headerlink" href="#module-tests.unit.test_tools" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.unit.test_tools.MockLabeler">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.unit.test_tools.</span></span><span class="sig-name descname"><span class="pre">MockLabeler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_tools.html#MockLabeler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_tools.MockLabeler" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_tools.sample_feature_vectors">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_tools.</span></span><span class="sig-name descname"><span class="pre">sample_feature_vectors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_tools.html#sample_feature_vectors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_tools.sample_feature_vectors" title="Link to this definition">¶</a></dt>
+<dd><p>Create sample feature vectors for testing.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_tools.test_apply_matcher">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_tools.</span></span><span class="sig-name descname"><span class="pre">test_apply_matcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_feature_vectors</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_tools.html#test_apply_matcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_tools.test_apply_matcher" title="Link to this definition">¶</a></dt>
+<dd><p>Test apply_matcher functionality.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_tools.test_down_sample">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_tools.</span></span><span class="sig-name descname"><span class="pre">test_down_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_feature_vectors</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_tools.html#test_down_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_tools.test_down_sample" title="Link to this definition">¶</a></dt>
+<dd><p>Test down_sample functionality.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_tools.test_select_seeds">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_tools.</span></span><span class="sig-name descname"><span class="pre">test_select_seeds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_feature_vectors</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_tools.html#test_select_seeds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_tools.test_select_seeds" title="Link to this definition">¶</a></dt>
+<dd><p>Test select_seeds functionality.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_tools.test_train_matcher">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_tools.</span></span><span class="sig-name descname"><span class="pre">test_train_matcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_feature_vectors</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_tools.html#test_train_matcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_tools.test_train_matcher" title="Link to this definition">¶</a></dt>
+<dd><p>Test train_matcher functionality.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

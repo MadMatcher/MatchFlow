@@ -1,0 +1,495 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>featurization &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">featurization</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for featurization</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyspark.sql.functions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyspark.sql.types</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">T</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">MemmapDataFrame</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">threading</span><span class="w"> </span><span class="kn">import</span> <span class="n">Lock</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">joblib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parallel</span><span class="p">,</span> <span class="n">delayed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">repartition_df</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tokenizer</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AlphaNumericTokenizer</span><span class="p">,</span>
+    <span class="n">NumericTokenizer</span><span class="p">,</span>
+    <span class="n">QGramTokenizer</span><span class="p">,</span>
+    <span class="n">StrippedQGramTokenizer</span><span class="p">,</span>
+    <span class="n">WhiteSpaceTokenizer</span><span class="p">,</span>
+    <span class="n">StrippedWhiteSpaceTokenizer</span><span class="p">,</span>
+    <span class="n">ShingleTokenizer</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">feature</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ExactMatchFeature</span><span class="p">,</span>
+    <span class="n">EditDistanceFeature</span><span class="p">,</span>
+    <span class="n">SmithWatermanFeature</span><span class="p">,</span>
+    <span class="n">NeedlemanWunschFeature</span><span class="p">,</span>
+    <span class="n">RelDiffFeature</span><span class="p">,</span>
+    <span class="n">JaccardFeature</span><span class="p">,</span> 
+    <span class="n">OverlapCoeffFeature</span><span class="p">,</span> 
+    <span class="n">CosineFeature</span><span class="p">,</span>
+    <span class="n">MongeElkanFeature</span><span class="p">,</span>
+    <span class="n">TFIDFFeature</span><span class="p">,</span> 
+    <span class="n">SIFFeature</span>
+<span class="p">)</span>
+
+
+<span class="n">TOKENIZERS</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">StrippedWhiteSpaceTokenizer</span><span class="p">(),</span>
+        <span class="n">NumericTokenizer</span><span class="p">(),</span>
+        <span class="n">QGramTokenizer</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">EXTRA_TOKENIZERS</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">AlphaNumericTokenizer</span><span class="p">(),</span>
+        <span class="n">QGramTokenizer</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span>
+        <span class="n">StrippedQGramTokenizer</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+        <span class="n">StrippedQGramTokenizer</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">SIM_FUNCTIONS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">TFIDFFeature</span><span class="p">,</span>
+    <span class="n">JaccardFeature</span><span class="p">,</span> 
+    <span class="n">SIFFeature</span><span class="p">,</span>
+    <span class="n">OverlapCoeffFeature</span><span class="p">,</span> 
+    <span class="n">CosineFeature</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="BuildCache">
+<a class="viewcode-back" href="../source/modules/featurization.html#featurization.BuildCache">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BuildCache</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
+
+<div class="viewcode-block" id="BuildCache.add_or_get">
+<a class="viewcode-back" href="../source/modules/featurization.html#featurization.BuildCache.add_or_get">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_or_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">builder</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">builder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">builder</span><span class="p">)]</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">builder</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">builder</span></div>
+
+
+<div class="viewcode-block" id="BuildCache.clear">
+<a class="viewcode-back" href="../source/modules/featurization.html#featurization.BuildCache.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+</div>
+
+
+<div class="viewcode-block" id="create_features">
+<a class="viewcode-back" href="../source/modules/featurization.html#featurization.create_features">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_features</span><span class="p">(</span>
+    <span class="n">A</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">B</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">a_cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">b_cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">sim_functions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tokenizers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">null_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">.5</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    creates the features which will be used to featurize your tuple pairs</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    A : pandas DataFrame</span>
+<span class="sd">        the records of table A</span>
+<span class="sd">    B : pandas DataFrame</span>
+<span class="sd">        the records of table B</span>
+<span class="sd">    a_cols : list</span>
+<span class="sd">        The names of the columns for DataFrame A that should have features generated</span>
+<span class="sd">    b_cols : list</span>
+<span class="sd">        The names of the columns for DataFrame B that should have features generated</span>
+<span class="sd">    sim_functions : list of callables, optional</span>
+<span class="sd">        similarity functions to apply (default: None)</span>
+<span class="sd">    tokenizers : list of callables, optional</span>
+<span class="sd">        tokenizers to use (default: None)</span>
+<span class="sd">    null_threshold : float</span>
+<span class="sd">        the portion of values that must be null in order for the column to be dropped and</span>
+<span class="sd">        not considered for feature generation</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pandas DataFrame</span>
+<span class="sd">        a DataFrame containing initialized feature objects for columns in A, B</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">sim_functions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sim_functions</span> <span class="o">=</span> <span class="n">SIM_FUNCTIONS</span>
+    <span class="k">if</span> <span class="n">tokenizers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tokenizers</span> <span class="o">=</span> <span class="n">TOKENIZERS</span>
+
+    <span class="c1"># only keep a_cols and b_cols (if B is not None)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="n">a_cols</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">B</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df</span><span class="p">,</span> <span class="n">B</span><span class="p">[</span><span class="n">b_cols</span><span class="p">]])</span>
+
+    <span class="c1"># drop null columns</span>
+    <span class="n">null_frac</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">cols_to_keep</span> <span class="o">=</span> <span class="n">null_frac</span><span class="p">[</span><span class="n">null_frac</span> <span class="o">&lt;</span> <span class="n">null_threshold</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">cols_to_keep</span><span class="p">]</span>
+
+    <span class="c1"># find numeric columns, and then cast everything to a string</span>
+    <span class="n">numeric_cols</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">])</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+
+    <span class="c1"># create token columns map</span>
+    <span class="n">token_cols</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tokenizers</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">cname</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">out_col_name</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+            <span class="n">token_cols</span><span class="p">[</span><span class="n">cname</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+
+    <span class="c1"># get the average number of tokens for each tokenizer, column</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">new_col</span><span class="p">,</span> <span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="n">orig_col</span><span class="p">)</span> <span class="ow">in</span> <span class="n">token_cols</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">tokens</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">orig_col</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notnull</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="n">results</span><span class="p">[</span><span class="n">new_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">counts</span>
+    <span class="n">counts_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+    <span class="n">avg_counts</span> <span class="o">=</span> <span class="n">counts_df</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="c1"># add features to features list</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols_to_keep</span><span class="p">:</span>
+        <span class="n">features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ExactMatchFeature</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">numeric_cols</span><span class="p">:</span>
+        <span class="n">features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">RelDiffFeature</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">token_col_name</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">token_cols</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">tokenizer</span><span class="p">,</span> <span class="n">column_name</span> <span class="o">=</span> <span class="n">p</span>
+        <span class="n">avg_count</span> <span class="o">=</span> <span class="n">avg_counts</span><span class="p">[</span><span class="n">token_col_name</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">avg_count</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">features</span> <span class="o">+=</span> <span class="p">[</span><span class="n">f</span><span class="p">(</span><span class="n">column_name</span><span class="p">,</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">sim_functions</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">)</span> <span class="o">==</span> <span class="n">AlphaNumericTokenizer</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">avg_count</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">:</span>
+                <span class="n">features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MongeElkanFeature</span><span class="p">(</span><span class="n">column_name</span><span class="p">,</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">))</span>
+                <span class="n">features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">EditDistanceFeature</span><span class="p">(</span><span class="n">column_name</span><span class="p">,</span> <span class="n">column_name</span><span class="p">))</span>
+                <span class="n">features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SmithWatermanFeature</span><span class="p">(</span><span class="n">column_name</span><span class="p">,</span> <span class="n">column_name</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">features</span></div>
+
+
+
+<div class="viewcode-block" id="featurize">
+<a class="viewcode-back" href="../source/modules/featurization.html#featurization.featurize">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">featurize</span><span class="p">(</span>
+    <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">],</span>
+    <span class="n">A</span><span class="p">,</span>
+    <span class="n">B</span><span class="p">,</span>
+    <span class="n">candidates</span><span class="p">,</span>
+    <span class="n">output_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;features&#39;</span><span class="p">,</span>
+    <span class="n">fill_na</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    applies the featurizer to the record pairs in candidates</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    features : List[Callable]</span>
+<span class="sd">        a DataFrame containing initialized feature objects for columns in A, B</span>
+<span class="sd">    A : pandas DataFrame</span>
+<span class="sd">        the records of table A</span>
+<span class="sd">    B : pandas DataFrame</span>
+<span class="sd">        the records of table B</span>
+<span class="sd">    candidates : pandas DataFrame</span>
+<span class="sd">        id pairs of A and B that are potential matches</span>
+<span class="sd">    output_col : str</span>
+<span class="sd">        the name of the column for the resulting feature vectors, default `fvs`</span>
+<span class="sd">    fill_na : </span>
+<span class="sd">        value to fill in for missing data, default None</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pandas DataFrame</span>
+<span class="sd">        DataFrame with feature vectors created with the following schema:</span>
+<span class="sd">        (`id2`, `id1`, `fv`, other columns from candidates)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+    <span class="n">table_a_preproc</span><span class="p">,</span> <span class="n">table_b_preproc</span> <span class="o">=</span> <span class="n">_build</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="si">}</span><span class="s2"> seconds to preprocess tables&quot;</span><span class="p">)</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+    <span class="n">fvs</span> <span class="o">=</span> <span class="n">_gen_fvs</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">table_a_preproc</span><span class="p">,</span> <span class="n">table_b_preproc</span><span class="p">,</span> <span class="n">output_col</span><span class="p">,</span> <span class="n">fill_na</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="si">}</span><span class="s2"> seconds to generate fvs&quot;</span><span class="p">)</span>
+    <span class="n">fvs</span> <span class="o">=</span> <span class="n">fvs</span><span class="o">.</span><span class="n">toPandas</span><span class="p">()</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="si">}</span><span class="s2"> seconds to convert to pandas&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fvs</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">_prepreprocess_table</span><span class="p">(</span><span class="n">A</span><span class="p">)</span><span class="o">.</span><span class="n">persist</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">B</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">_prepreprocess_table</span><span class="p">(</span><span class="n">B</span><span class="p">)</span><span class="o">.</span><span class="n">persist</span><span class="p">()</span>
+    <span class="n">cache</span> <span class="o">=</span> <span class="n">BuildCache</span><span class="p">()</span>
+    <span class="n">pool</span> <span class="o">=</span> <span class="n">Parallel</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;threading&#39;</span><span class="p">)</span>
+    <span class="n">pool</span><span class="p">(</span><span class="n">delayed</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">build</span><span class="p">)(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">cache</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span><span class="p">)</span>
+    <span class="n">cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">B</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">delayed_build</span> <span class="o">=</span> <span class="n">delayed</span><span class="p">(</span><span class="n">_create_sqlite_df</span><span class="p">)</span>
+        <span class="n">table_a_preproc</span><span class="p">,</span> <span class="n">table_b_preproc</span> <span class="o">=</span> <span class="n">pool</span><span class="p">([</span><span class="n">delayed_build</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">B</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span> <span class="n">features</span><span class="p">),</span> <span class="n">delayed_build</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">features</span><span class="p">)])</span>
+        <span class="n">table_b_preproc</span><span class="o">.</span><span class="n">to_spark</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">table_a_preproc</span> <span class="o">=</span> <span class="n">_create_sqlite_df</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">B</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">table_b_preproc</span> <span class="o">=</span> <span class="n">table_a_preproc</span>
+
+    <span class="n">table_a_preproc</span><span class="o">.</span><span class="n">to_spark</span><span class="p">()</span>
+    <span class="n">A</span><span class="o">.</span><span class="n">unpersist</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">B</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">B</span><span class="o">.</span><span class="n">unpersist</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">table_a_preproc</span><span class="p">,</span> <span class="n">table_b_preproc</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_prepreprocess_table</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="n">part_size</span> <span class="o">=</span> <span class="mi">5000</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">repartition_df</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">part_size</span><span class="p">,</span> <span class="s1">&#39;_id&#39;</span><span class="p">)</span>\
+        <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s1">&#39;_id&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="s1">&#39;string&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="o">!=</span> <span class="s1">&#39;_id&#39;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_create_sqlite_df</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pp_for_a</span><span class="p">,</span> <span class="n">pp_for_b</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pp_for_a</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">pp_for_b</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;preprocessing must be done for a and/or b&#39;</span><span class="p">)</span>
+
+    <span class="n">schema</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">StructType</span><span class="p">([</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">schema</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">],</span>
+        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s1">&#39;pickle&#39;</span><span class="p">,</span>  <span class="n">T</span><span class="o">.</span><span class="n">BinaryType</span><span class="p">())</span>
+    <span class="p">])</span>
+
+    <span class="c1"># project out unused columns</span>
+    <span class="c1">#df = df.select(&#39;_id&#39;, *self._projected_columns)</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="n">_get_processing_columns</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pp_for_a</span><span class="p">,</span> <span class="n">pp_for_b</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">mapInPandas</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span> <span class="n">_preprocess</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pp_for_a</span><span class="p">,</span> <span class="n">pp_for_b</span><span class="p">,</span> <span class="n">features</span><span class="p">),</span> <span class="n">schema</span><span class="p">)</span>
+
+    <span class="n">sqlite_df</span> <span class="o">=</span> <span class="n">MemmapDataFrame</span><span class="o">.</span><span class="n">from_spark_df</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s1">&#39;pickle&#39;</span><span class="p">,</span> <span class="n">cols</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sqlite_df</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_processing_columns</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pp_for_a</span><span class="p">,</span> <span class="n">pp_for_b</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">toPandas</span><span class="p">()</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;_id&#39;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">_preprocess_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pp_for_a</span><span class="p">,</span> <span class="n">pp_for_b</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_preprocess_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pp_for_a</span><span class="p">,</span> <span class="n">pp_for_b</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">pp_for_a</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pp_for_b</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_preprocess</span><span class="p">(</span><span class="n">df_itr</span><span class="p">,</span> <span class="n">pp_for_a</span><span class="p">,</span> <span class="n">pp_for_b</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+    <span class="n">preprocess_chunk_size</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="k">for</span> <span class="n">dataframe</span> <span class="ow">in</span> <span class="n">df_itr</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataframe</span><span class="p">),</span> <span class="n">preprocess_chunk_size</span><span class="p">):</span>  <span class="c1"># TODO: 100 used to be self._preprocess_chunk_size, may want to make a variable</span>
+            <span class="k">if</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataframe</span><span class="p">):</span>
+                <span class="k">break</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">start</span> <span class="o">+</span> <span class="n">preprocess_chunk_size</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataframe</span><span class="p">))</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;_id&#39;</span><span class="p">)</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">_preprocess_data</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pp_for_a</span><span class="p">,</span> <span class="n">pp_for_b</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
+
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span> <span class="n">MemmapDataFrame</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>\
+                    <span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;pickle&#39;</span><span class="p">)</span>\
+                    <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+            <span class="k">yield</span> <span class="n">df</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gen_fvs</span><span class="p">(</span><span class="n">pairs</span><span class="p">,</span> <span class="n">table_a_preproc</span><span class="p">,</span> <span class="n">table_b_preproc</span><span class="p">,</span> <span class="n">output_col</span><span class="p">,</span> <span class="n">fill_na</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">table_a_preproc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;FVGenerator must be built before generating feature vectors&#39;</span><span class="p">)</span>
+
+    <span class="n">fields</span> <span class="o">=</span> <span class="n">pairs</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;id1_list&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">fields</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fields</span><span class="p">):</span>
+        <span class="c1"># is an array field</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">dataType</span><span class="p">,</span> <span class="s1">&#39;elementType&#39;</span><span class="p">):</span>
+            <span class="n">fields</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">dataType</span><span class="o">.</span><span class="n">elementType</span><span class="p">)</span>
+
+    <span class="n">schema</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">StructType</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>\
+        <span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;id1&#39;</span><span class="p">,</span> <span class="s1">&#39;long&#39;</span><span class="p">)</span>\
+        <span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;fv&#39;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">ArrayType</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">FloatType</span><span class="p">()))</span>\
+
+    <span class="n">pairs</span> <span class="o">=</span> <span class="n">repartition_df</span><span class="p">(</span><span class="n">pairs</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="s1">&#39;id2&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_feature_vectors_udf</span><span class="p">(</span><span class="n">table_a_preproc</span><span class="p">,</span> <span class="n">table_b_preproc</span><span class="p">,</span> <span class="n">fill_na</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_udf</span><span class="p">(</span><span class="n">df_itr</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">df_itr</span><span class="p">:</span>
+                <span class="k">yield from</span> <span class="n">_generate_feature_vectors</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">table_a_preproc</span><span class="p">,</span> <span class="n">table_b_preproc</span><span class="p">,</span> <span class="n">fill_na</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_udf</span>
+
+    <span class="n">fvs</span> <span class="o">=</span> <span class="n">pairs</span><span class="o">.</span><span class="n">mapInPandas</span><span class="p">(</span><span class="n">generate_feature_vectors_udf</span><span class="p">(</span><span class="n">table_a_preproc</span><span class="p">,</span> <span class="n">table_b_preproc</span><span class="p">,</span> <span class="n">fill_na</span><span class="p">,</span> <span class="n">features</span><span class="p">),</span> <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>\
+        <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">&#39;_id&#39;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">monotonically_increasing_id</span><span class="p">())</span>\
+        <span class="o">.</span><span class="n">withColumnRenamed</span><span class="p">(</span><span class="s1">&#39;fv&#39;</span><span class="p">,</span> <span class="n">output_col</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fvs</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_generate_feature_vectors</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">table_a_preproc</span><span class="p">,</span> <span class="n">table_b_preproc</span><span class="p">,</span> <span class="n">fill_na</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+    <span class="n">table_a</span> <span class="o">=</span> <span class="n">table_a_preproc</span>
+    <span class="n">table_b</span> <span class="o">=</span> <span class="n">table_b_preproc</span>
+    <span class="n">table_a</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+    <span class="n">table_b</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+
+    <span class="n">b_recs</span> <span class="o">=</span> <span class="n">table_b</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;id2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">b_rec</span> <span class="o">=</span> <span class="n">b_recs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">id2</span><span class="p">]</span>
+        <span class="c1"># for high arity data memory can be a issue</span>
+        <span class="c1"># fetch records lazily without caching to reduce memory pressure</span>
+        <span class="n">a_recs</span> <span class="o">=</span> <span class="n">table_a</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">id1_list</span><span class="p">)</span>
+        <span class="n">f_mat</span> <span class="o">=</span> <span class="n">_generate_feature_vectors_inner</span><span class="p">(</span><span class="n">b_rec</span><span class="p">,</span> <span class="n">a_recs</span><span class="p">,</span> <span class="n">fill_na</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
+
+        <span class="n">row</span><span class="p">[</span><span class="s1">&#39;fv&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">f_mat</span><span class="p">)</span>
+        <span class="n">row</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;id1_list&#39;</span> <span class="p">:</span> <span class="s1">&#39;id1&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_generate_feature_vectors_inner</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">recs</span><span class="p">,</span> <span class="n">fill_na</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+    <span class="n">f_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">recs</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span><span class="p">]</span>
+    <span class="n">f_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">f_cols</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fill_na</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">f_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">f_mat</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">nan</span><span class="o">=</span><span class="n">fill_na</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">f_mat</span>
+
+
+<div class="viewcode-block" id="score">
+<a class="viewcode-back" href="../source/modules/featurization.html#featurization.score">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">score</span><span class="p">(</span>
+        <span class="n">fvs</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">features</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    computes a score by summing up the positively correlated features score in the feature vectors</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fvs : pandas DataFrame</span>
+<span class="sd">        DataFrame with feature vectors created with the following schema:</span>
+<span class="sd">        (`id2`, `id1`, `fv`, other columns from candidates)</span>
+<span class="sd">    features : pandas DataFrame</span>
+<span class="sd">        a DataFrame containing initialized feature objects for columns in A, B                      </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

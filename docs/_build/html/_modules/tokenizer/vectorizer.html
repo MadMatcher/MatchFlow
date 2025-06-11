@@ -1,0 +1,281 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tokenizer.vectorizer &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">tokenizer.vectorizer</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for tokenizer.vectorizer</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyspark.sql.functions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.sparse.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">svds</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.utils.extmath</span><span class="w"> </span><span class="kn">import</span> <span class="n">svd_flip</span><span class="p">,</span> <span class="n">safe_sparse_dot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_null</span><span class="p">,</span> <span class="n">get_logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparseVec</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numba</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">PerfectHashFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">storage</span><span class="w"> </span><span class="kn">import</span> <span class="n">MemmapArray</span>
+<span class="c1">#import spacy </span>
+
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+
+
+<div class="viewcode-block" id="TFIDFVectorizer">
+<a class="viewcode-back" href="../../source/modules/tokenizer.vectorizer.html#tokenizer.vectorizer.TFIDFVectorizer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TFIDFVectorizer</span><span class="p">:</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_N</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hash_func</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hashes</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_idfs</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="TFIDFVectorizer.build_from_doc_freqs">
+<a class="viewcode-back" href="../../source/modules/tokenizer.vectorizer.html#tokenizer.vectorizer.TFIDFVectorizer.build_from_doc_freqs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_from_doc_freqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc_freqs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_idfs</span> <span class="o">=</span> <span class="n">MemmapArray</span><span class="p">(</span><span class="n">_doc_freq_to_idf</span><span class="p">(</span><span class="n">doc_freqs</span><span class="o">.</span><span class="n">doc_freqs_</span><span class="p">,</span> <span class="n">doc_freqs</span><span class="o">.</span><span class="n">corpus_size_</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_idfs</span><span class="o">.</span><span class="n">to_spark</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hashes</span> <span class="o">=</span> <span class="n">MemmapArray</span><span class="p">(</span><span class="n">doc_freqs</span><span class="o">.</span><span class="n">hashes_</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hashes</span><span class="o">.</span><span class="n">to_spark</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hash_func</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">doc_freqs</span><span class="o">.</span><span class="n">hash_func_</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_idfs</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hash_func</span><span class="o">.</span><span class="n">hash</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="TFIDFVectorizer.out_col_name">
+<a class="viewcode-back" href="../../source/modules/tokenizer.vectorizer.html#tokenizer.vectorizer.TFIDFVectorizer.out_col_name">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">out_col_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;term_vec(</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s1">)&#39;</span></div>
+
+    
+<div class="viewcode-block" id="TFIDFVectorizer.init">
+<a class="viewcode-back" href="../../source/modules/tokenizer.vectorizer.html#tokenizer.vectorizer.TFIDFVectorizer.init">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_idfs</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hashes</span><span class="o">.</span><span class="n">init</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="TFIDFVectorizer.vectorize">
+<a class="viewcode-back" href="../../source/modules/tokenizer.vectorizer.html#tokenizer.vectorizer.TFIDFVectorizer.vectorize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">vectorize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">is_null</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">hashes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_hash</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">))</span>
+        <span class="n">hashes</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">hashes</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SparseVec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_N</span><span class="p">,</span> <span class="o">*</span><span class="n">_vectorize_tfidf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hashes</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idfs</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">hashes</span><span class="p">,</span> <span class="n">values</span><span class="p">))</span></div>
+</div>
+
+
+<span class="nd">@nb</span><span class="o">.</span><span class="n">njit</span><span class="p">(</span><span class="s1">&#39;float32[:](int64[::1], int64)&#39;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_doc_freq_to_idf</span><span class="p">(</span><span class="n">doc_freq</span><span class="p">,</span> <span class="n">corpus_size</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="n">corpus_size</span> <span class="o">+</span><span class="mi">1</span> <span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">doc_freq</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+
+
+
+<span class="nd">@nb</span><span class="o">.</span><span class="n">njit</span><span class="p">(</span>
+    <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Tuple</span><span class="p">((</span>
+            <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">int32</span><span class="p">[:],</span>
+            <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">float32</span><span class="p">[:]</span>
+        <span class="p">))(</span>
+            <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_vectorize_tfidf</span><span class="p">(</span><span class="n">hash_idx</span><span class="p">,</span> <span class="n">idfs</span><span class="p">,</span> <span class="n">hashes</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="c1"># sorted hashes implies idxes are sorted because </span>
+        <span class="c1"># self._hashes is also sorted</span>
+        <span class="n">idxes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">hash_idx</span><span class="p">,</span> <span class="n">hashes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">hash_idx</span><span class="p">[</span><span class="n">idxes</span><span class="p">]</span> <span class="o">!=</span> <span class="n">hashes</span><span class="p">):</span>
+            <span class="c1">#missing_hashes = hashes[hash_idx[idxes] != hashes]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;unknown hash&#39;</span><span class="p">)</span>
+
+        <span class="n">idf</span> <span class="o">=</span> <span class="n">idfs</span><span class="p">[</span><span class="n">idxes</span><span class="p">]</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">idf</span>
+        <span class="n">values</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">idxes</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span> <span class="n">values</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SIFVectorizer">
+<a class="viewcode-back" href="../../source/modules/tokenizer.vectorizer.html#tokenizer.vectorizer.SIFVectorizer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SIFVectorizer</span><span class="p">:</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_a_param</span> <span class="o">=</span> <span class="mf">0.001</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_N</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sifs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hash_func</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hashes</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="SIFVectorizer.build_from_doc_freqs">
+<a class="viewcode-back" href="../../source/modules/tokenizer.vectorizer.html#tokenizer.vectorizer.SIFVectorizer.build_from_doc_freqs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_from_doc_freqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc_freqs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sifs</span> <span class="o">=</span> <span class="n">MemmapArray</span><span class="p">(</span><span class="n">_doc_freq_to_sif</span><span class="p">(</span><span class="n">doc_freqs</span><span class="o">.</span><span class="n">doc_freqs_</span><span class="p">,</span> <span class="n">doc_freqs</span><span class="o">.</span><span class="n">corpus_size_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_a_param</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sifs</span><span class="o">.</span><span class="n">to_spark</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hashes</span> <span class="o">=</span> <span class="n">MemmapArray</span><span class="p">(</span><span class="n">doc_freqs</span><span class="o">.</span><span class="n">hashes_</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hashes</span><span class="o">.</span><span class="n">to_spark</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hash_func</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">doc_freqs</span><span class="o">.</span><span class="n">hash_func_</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sifs</span><span class="p">)</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hash_func</span><span class="o">.</span><span class="n">hash</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="SIFVectorizer.out_col_name">
+<a class="viewcode-back" href="../../source/modules/tokenizer.vectorizer.html#tokenizer.vectorizer.SIFVectorizer.out_col_name">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">out_col_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;sif_vec(</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s1">)&#39;</span></div>
+
+    
+<div class="viewcode-block" id="SIFVectorizer.init">
+<a class="viewcode-back" href="../../source/modules/tokenizer.vectorizer.html#tokenizer.vectorizer.SIFVectorizer.init">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sifs</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hashes</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="SIFVectorizer.vectorize">
+<a class="viewcode-back" href="../../source/modules/tokenizer.vectorizer.html#tokenizer.vectorizer.SIFVectorizer.vectorize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">vectorize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">is_null</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">hashes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_hash</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">))</span>
+        <span class="n">hashes</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">hashes</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">SparseVec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_N</span><span class="p">,</span> <span class="o">*</span><span class="n">_vectorize_sif</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hashes</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sifs</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">hashes</span><span class="p">,</span> <span class="n">values</span><span class="p">))</span></div>
+</div>
+
+
+
+<span class="nd">@nb</span><span class="o">.</span><span class="n">njit</span><span class="p">(</span><span class="s1">&#39;float32[:](int64[::1], int64, float32)&#39;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_doc_freq_to_sif</span><span class="p">(</span><span class="n">doc_freq</span><span class="p">,</span> <span class="n">corpus_size</span><span class="p">,</span> <span class="n">a_param</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">((</span><span class="n">a_param</span> <span class="o">/</span> <span class="p">((</span><span class="n">doc_freq</span> <span class="o">/</span> <span class="n">corpus_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">a_param</span><span class="p">)))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+<span class="nd">@nb</span><span class="o">.</span><span class="n">njit</span><span class="p">(</span>
+    <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Tuple</span><span class="p">((</span>
+            <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">int32</span><span class="p">[:],</span>
+            <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">float32</span><span class="p">[:]</span>
+        <span class="p">))(</span>
+            <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">nb</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_vectorize_sif</span><span class="p">(</span><span class="n">hash_idx</span><span class="p">,</span> <span class="n">sifs</span><span class="p">,</span> <span class="n">hashes</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="c1"># sorted hashes implies idxes are sorted because </span>
+        <span class="c1"># self._hashes is also sorted</span>
+        <span class="n">idxes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">hash_idx</span><span class="p">,</span> <span class="n">hashes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">hash_idx</span><span class="p">[</span><span class="n">idxes</span><span class="p">]</span> <span class="o">!=</span> <span class="n">hashes</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;unknown hash&#39;</span><span class="p">)</span>
+
+        <span class="n">sif</span> <span class="o">=</span> <span class="n">sifs</span><span class="p">[</span><span class="n">idxes</span><span class="p">]</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">*</span> <span class="n">sif</span>
+        <span class="n">values</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">idxes</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span> <span class="n">values</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

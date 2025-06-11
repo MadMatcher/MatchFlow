@@ -1,0 +1,270 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tests.unit.test_labeler &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">tests.unit.test_labeler</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for tests.unit.test_labeler</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">labeler</span><span class="w"> </span><span class="kn">import</span> <span class="n">GoldLabeler</span><span class="p">,</span> <span class="n">DelayedGoldLabeler</span><span class="p">,</span> <span class="n">CLILabeler</span><span class="p">,</span> <span class="n">CustomLabeler</span><span class="p">,</span> <span class="n">Labeler</span>
+
+<div class="viewcode-block" id="sample_data">
+<a class="viewcode-back" href="../../../source/modules/tests.unit.test_labeler.html#tests.unit.test_labeler.sample_data">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_data</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create sample data for testing.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;a_df&#39;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+            <span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;John Smith&#39;</span><span class="p">,</span> <span class="s1">&#39;Jane Doe&#39;</span><span class="p">,</span> <span class="s1">&#39;Bob Johnson&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">35</span><span class="p">],</span>
+            <span class="s1">&#39;city&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;New York&#39;</span><span class="p">,</span> <span class="s1">&#39;Boston&#39;</span><span class="p">,</span> <span class="s1">&#39;Chicago&#39;</span><span class="p">]</span>
+        <span class="p">}),</span>
+        <span class="s1">&#39;b_df&#39;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+            <span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;John Smith&#39;</span><span class="p">,</span> <span class="s1">&#39;Jane Smith&#39;</span><span class="p">,</span> <span class="s1">&#39;Bob Johnson&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">35</span><span class="p">],</span>
+            <span class="s1">&#39;city&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;NYC&#39;</span><span class="p">,</span> <span class="s1">&#39;Boston&#39;</span><span class="p">,</span> <span class="s1">&#39;Chicago&#39;</span><span class="p">]</span>
+        <span class="p">})</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="gold_pairs">
+<a class="viewcode-back" href="../../../source/modules/tests.unit.test_labeler.html#tests.unit.test_labeler.gold_pairs">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gold_pairs</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create sample gold standard pairs.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)}</span>  <span class="c1"># (1,4) and (3,6) are matches</span></div>
+
+
+<div class="viewcode-block" id="test_gold_labeler">
+<a class="viewcode-back" href="../../../source/modules/tests.unit.test_labeler.html#tests.unit.test_labeler.test_gold_labeler">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_gold_labeler</span><span class="p">(</span><span class="n">gold_pairs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test GoldLabeler functionality.&quot;&quot;&quot;</span>
+    <span class="n">labeler</span> <span class="o">=</span> <span class="n">GoldLabeler</span><span class="p">(</span><span class="n">gold_pairs</span><span class="p">)</span>
+    
+    <span class="c1"># Test matching pairs</span>
+    <span class="k">assert</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="o">==</span> <span class="mf">1.0</span>
+    <span class="k">assert</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="mf">1.0</span>
+    
+    <span class="c1"># Test non-matching pairs</span>
+    <span class="k">assert</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.0</span>
+    <span class="k">assert</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.0</span>
+    <span class="k">assert</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.0</span></div>
+
+
+<div class="viewcode-block" id="test_delayed_gold_labeler">
+<a class="viewcode-back" href="../../../source/modules/tests.unit.test_labeler.html#tests.unit.test_labeler.test_delayed_gold_labeler">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_delayed_gold_labeler</span><span class="p">(</span><span class="n">gold_pairs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test DelayedGoldLabeler functionality.&quot;&quot;&quot;</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># 100ms delay</span>
+    <span class="n">labeler</span> <span class="o">=</span> <span class="n">DelayedGoldLabeler</span><span class="p">(</span><span class="n">gold_pairs</span><span class="p">,</span> <span class="n">delay</span><span class="p">)</span>
+    
+    <span class="c1"># Test timing</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    
+    <span class="k">assert</span> <span class="n">label</span> <span class="o">==</span> <span class="mf">1.0</span>
+    <span class="k">assert</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="n">delay</span>  <span class="c1"># Should take at least delay seconds</span>
+    
+    <span class="c1"># Test non-matching pair</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    
+    <span class="k">assert</span> <span class="n">label</span> <span class="o">==</span> <span class="mf">0.0</span>
+    <span class="k">assert</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="n">delay</span></div>
+
+
+<div class="viewcode-block" id="MockCLILabeler">
+<a class="viewcode-back" href="../../../source/modules/tests.unit.test_labeler.html#tests.unit.test_labeler.MockCLILabeler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MockCLILabeler</span><span class="p">(</span><span class="n">CLILabeler</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a_df</span><span class="p">,</span> <span class="n">b_df</span><span class="p">,</span> <span class="n">responses</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">a_df</span><span class="p">,</span> <span class="n">b_df</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">responses</span> <span class="o">=</span> <span class="n">responses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response_index</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id1</span><span class="p">,</span> <span class="n">id2</span><span class="p">):</span>
+        <span class="c1"># Simulate CLILabeler behavior without actual user input</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">responses</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">response_index</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response_index</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">responses</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">response</span> <span class="o">==</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span>
+        <span class="k">elif</span> <span class="n">response</span> <span class="o">==</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">elif</span> <span class="n">response</span> <span class="o">==</span> <span class="s1">&#39;u&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">2.0</span>
+        <span class="k">elif</span> <span class="n">response</span> <span class="o">==</span> <span class="s1">&#39;s&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="k">elif</span> <span class="n">response</span> <span class="o">==</span> <span class="s1">&#39;h&#39;</span><span class="p">:</span>
+            <span class="c1"># For help, get next response</span>
+            <span class="n">next_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">responses</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">response_index</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">response_index</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">responses</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="n">next_response</span> <span class="o">==</span> <span class="s1">&#39;y&#39;</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected response: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="test_custom_labeler">
+<a class="viewcode-back" href="../../../source/modules/tests.unit.test_labeler.html#tests.unit.test_labeler.test_custom_labeler">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_custom_labeler</span><span class="p">(</span><span class="n">spark_session</span><span class="p">,</span> <span class="n">sample_data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test CustomLabeler functionality.&quot;&quot;&quot;</span>
+    <span class="c1"># Convert pandas DataFrames to Spark DataFrames</span>
+    <span class="n">a_df</span> <span class="o">=</span> <span class="n">spark_session</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">sample_data</span><span class="p">[</span><span class="s1">&#39;a_df&#39;</span><span class="p">])</span>
+    <span class="n">b_df</span> <span class="o">=</span> <span class="n">spark_session</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">sample_data</span><span class="p">[</span><span class="s1">&#39;b_df&#39;</span><span class="p">])</span>
+    
+    <span class="n">labeler</span> <span class="o">=</span> <span class="n">TestCustomLabeler</span><span class="p">(</span><span class="n">a_df</span><span class="p">,</span> <span class="n">b_df</span><span class="p">)</span>
+
+    <span class="c1"># Test exact match</span>
+    <span class="k">assert</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="o">==</span> <span class="mf">1.0</span>  <span class="c1"># John Smith, same age</span>
+    <span class="k">assert</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.0</span>  <span class="c1"># Jane Doe vs Jane Smith</span>
+    <span class="k">assert</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="mf">1.0</span>  <span class="c1"># Bob Johnson, same age</span>
+
+    <span class="c1"># Test error handling</span>
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">):</span>
+        <span class="n">labeler</span><span class="p">(</span><span class="mi">999</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>  <span class="c1"># Non-existent ID</span></div>
+
+
+<div class="viewcode-block" id="test_cli_labeler">
+<a class="viewcode-back" href="../../../source/modules/tests.unit.test_labeler.html#tests.unit.test_labeler.test_cli_labeler">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_cli_labeler</span><span class="p">(</span><span class="n">spark_session</span><span class="p">,</span> <span class="n">sample_data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test CLILabeler functionality with mock input.&quot;&quot;&quot;</span>
+    <span class="c1"># Convert pandas DataFrames to Spark DataFrames</span>
+    <span class="n">a_df</span> <span class="o">=</span> <span class="n">spark_session</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">sample_data</span><span class="p">[</span><span class="s1">&#39;a_df&#39;</span><span class="p">])</span>
+    <span class="n">b_df</span> <span class="o">=</span> <span class="n">spark_session</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">sample_data</span><span class="p">[</span><span class="s1">&#39;b_df&#39;</span><span class="p">])</span>
+    
+    <span class="c1"># Test with yes/no/unsure responses</span>
+    <span class="n">labeler</span> <span class="o">=</span> <span class="n">MockCLILabeler</span><span class="p">(</span>
+        <span class="n">a_df</span><span class="p">,</span>
+        <span class="n">b_df</span><span class="p">,</span>
+        <span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">,</span> <span class="s1">&#39;u&#39;</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Test yes response</span>
+    <span class="k">assert</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="o">==</span> <span class="mf">1.0</span>
+
+    <span class="c1"># Test no response</span>
+    <span class="k">assert</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.0</span>
+
+    <span class="c1"># Test unsure response</span>
+    <span class="k">assert</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="mf">2.0</span>
+
+    <span class="c1"># Test stop response</span>
+    <span class="k">assert</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mf">1.0</span>
+
+    <span class="c1"># Test help response</span>
+    <span class="n">labeler</span> <span class="o">=</span> <span class="n">MockCLILabeler</span><span class="p">(</span><span class="n">a_df</span><span class="p">,</span> <span class="n">b_df</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="n">labeler</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="o">==</span> <span class="mf">1.0</span>  <span class="c1"># Should show help and then accept yes</span></div>
+
+
+<div class="viewcode-block" id="TestCustomLabeler">
+<a class="viewcode-back" href="../../../source/modules/tests.unit.test_labeler.html#tests.unit.test_labeler.TestCustomLabeler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestCustomLabeler</span><span class="p">(</span><span class="n">CustomLabeler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test implementation of CustomLabeler.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="TestCustomLabeler.label_pair">
+<a class="viewcode-back" href="../../../source/modules/tests.unit.test_labeler.html#tests.unit.test_labeler.TestCustomLabeler.label_pair">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">label_pair</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row1</span><span class="p">,</span> <span class="n">row2</span><span class="p">):</span>
+        <span class="c1"># Simple matching logic: match if names are similar and ages are equal</span>
+        <span class="n">name1</span> <span class="o">=</span> <span class="n">row1</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">name2</span> <span class="o">=</span> <span class="n">row2</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">age_match</span> <span class="o">=</span> <span class="n">row1</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">row2</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="n">name1</span> <span class="o">==</span> <span class="n">name2</span> <span class="ow">and</span> <span class="n">age_match</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

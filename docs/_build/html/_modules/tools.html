@@ -1,0 +1,338 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tools &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">tools</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for tools</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">labeler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">active_learning</span><span class="w"> </span><span class="kn">import</span> <span class="n">EntropyActiveLearner</span><span class="p">,</span> <span class="n">ContinuousEntropyActiveLearner</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLModel</span><span class="p">,</span> <span class="n">SKLearnModel</span><span class="p">,</span> <span class="n">SparkMLModel</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xxhash</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEstimator</span>
+
+
+<div class="viewcode-block" id="down_sample">
+<a class="viewcode-back" href="../source/modules/tools.html#tools.down_sample">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">down_sample</span><span class="p">(</span>
+    <span class="n">fvs</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">percent</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">search_id_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">score_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;score&#39;</span><span class="p">,</span>
+    <span class="n">bucket_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    down sample by score_column to produce percent * fvs.count() rows</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fvs : pandas DataFrame</span>
+<span class="sd">        the feature vectors to be downsampled</span>
+<span class="sd">    percent : float</span>
+<span class="sd">        the portion fo the vectors to be output, (0.0, 1.0]</span>
+<span class="sd">    score_column : str</span>
+<span class="sd">        the column that scored the vectors, should be positively correlated with the probability of the pair being a match</span>
+<span class="sd">    CHECK: should not need the search_id_column or bucket size because we don&#39;t need to hash into buckets for non-spark</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pandas DataFrame</span>
+<span class="sd">        the down sampled dataset with percent * fvs.count() rows with the same schema as fvs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fvs</span> <span class="o">=</span> <span class="n">fvs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">fvs</span><span class="p">)</span>
+    <span class="n">nparts</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">total</span> <span class="o">//</span> <span class="n">bucket_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">fvs</span><span class="p">[</span><span class="s2">&quot;_hash_bucket&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fvs</span><span class="p">[</span><span class="n">search_id_column</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">val</span><span class="p">:</span> <span class="n">xxhash</span><span class="o">.</span><span class="n">xxh64</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="o">.</span><span class="n">intdigest</span><span class="p">()</span> <span class="o">%</span> <span class="n">nparts</span><span class="p">)</span>
+    <span class="n">fvs</span><span class="p">[</span><span class="s2">&quot;_rank_desc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fvs</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;_hash_bucket&quot;</span><span class="p">)[</span><span class="n">score_column</span><span class="p">]</span> \
+        <span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">bucket_sizes</span> <span class="o">=</span> <span class="n">fvs</span><span class="p">[</span><span class="s2">&quot;_hash_bucket&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+    <span class="n">fvs</span><span class="p">[</span><span class="s2">&quot;_bucket_size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fvs</span><span class="p">[</span><span class="s2">&quot;_hash_bucket&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">bucket_sizes</span><span class="p">)</span>
+
+    <span class="n">fvs</span><span class="p">[</span><span class="s2">&quot;_percent_rank&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fvs</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;_bucket_size&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="k">else</span> <span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;_rank_desc&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;_bucket_size&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">fvs</span> <span class="o">=</span> <span class="n">fvs</span><span class="p">[</span><span class="n">fvs</span><span class="p">[</span><span class="s2">&quot;_percent_rank&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">percent</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">fvs</span> <span class="o">=</span> <span class="n">fvs</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_hash_bucket&quot;</span><span class="p">,</span> <span class="s2">&quot;_rank_desc&quot;</span><span class="p">,</span> <span class="s2">&quot;_bucket_size&quot;</span><span class="p">,</span> <span class="s2">&quot;_percent_rank&quot;</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">fvs</span></div>
+
+
+
+<div class="viewcode-block" id="select_seeds">
+<a class="viewcode-back" href="../source/modules/tools.html#tools.select_seeds">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">select_seeds</span><span class="p">(</span>
+    <span class="n">fvs</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">nseeds</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">labeler</span><span class="p">:</span> <span class="n">labeler</span><span class="p">,</span>
+    <span class="n">score_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;score&#39;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    select seeds to train a model</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fvs : pandas DataFrame</span>
+<span class="sd">        the DataFrame with feature vectors that is your training data</span>
+<span class="sd">    nseeds : int</span>
+<span class="sd">        the number of seeds you want to use to train an initial model</span>
+<span class="sd">    labeler : Labeler</span>
+<span class="sd">        the labeler object you want to use to assign labels to rows</span>
+<span class="sd">    score_column : str</span>
+<span class="sd">        the name of the score column in your fvs DataFrame</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pandas DataFrame</span>
+<span class="sd">        A DataFrame with labeled seeds, schema is (previous schema of fvs, `label`) where the values in label are either 0.0 or 1.0 </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fvs</span> <span class="o">=</span> <span class="n">fvs</span><span class="p">[</span><span class="n">fvs</span><span class="p">[</span><span class="n">score_column</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">maybe_pos</span> <span class="o">=</span> <span class="n">fvs</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="n">nseeds</span><span class="p">,</span> <span class="n">score_column</span><span class="p">)</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()</span>
+    <span class="n">maybe_neg</span> <span class="o">=</span> <span class="n">fvs</span><span class="o">.</span><span class="n">nsmallest</span><span class="p">(</span><span class="n">nseeds</span><span class="p">,</span> <span class="n">score_column</span><span class="p">)</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()</span>
+
+    <span class="n">pos_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">neg_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">seeds</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">pos_count</span> <span class="o">+</span> <span class="n">neg_count</span> <span class="o">&lt;</span> <span class="n">nseeds</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">nseeds</span> <span class="o">*</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">ex</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">maybe_pos</span><span class="p">)</span> <span class="k">if</span> <span class="n">pos_count</span> <span class="o">&lt;=</span> <span class="n">neg_count</span> <span class="k">else</span> <span class="nb">next</span><span class="p">(</span><span class="n">maybe_neg</span><span class="p">)</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">labeler</span><span class="p">(</span><span class="n">ex</span><span class="p">[</span><span class="s1">&#39;id1&#39;</span><span class="p">],</span> <span class="n">ex</span><span class="p">[</span><span class="s1">&#39;id2&#39;</span><span class="p">]))</span>
+            
+            <span class="k">if</span> <span class="n">label</span> <span class="o">==</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">:</span>  <span class="c1"># User requested to stop</span>
+                <span class="k">break</span>
+            <span class="k">elif</span> <span class="n">label</span> <span class="o">==</span> <span class="mf">2.0</span><span class="p">:</span>  <span class="c1"># User marked as unsure</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="n">label</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">:</span>  <span class="c1"># Positive match</span>
+                <span class="n">pos_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># label == 0.0, Negative match</span>
+                <span class="n">neg_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="n">ex</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="n">seeds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Ran out of examples before reaching nseeds&quot;</span><span class="p">)</span>
+            <span class="k">break</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">seeds</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No seeds were labeled before stopping&quot;</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;seeds: pos_count = </span><span class="si">{</span><span class="n">pos_count</span><span class="si">}</span><span class="s2"> neg_count = </span><span class="si">{</span><span class="n">neg_count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">seeds</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="train_matcher">
+<a class="viewcode-back" href="../source/modules/tools.html#tools.train_matcher">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_matcher</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">MLModel</span><span class="p">,</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">feature_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">label_col</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MLModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    train a matcher with labeled data</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model : MLModel</span>
+<span class="sd">        the model object that you want to train</span>
+<span class="sd">    df : pandas DataFrame</span>
+<span class="sd">        the DataFrame which will be used to train the data with at least a feature column and a label column</span>
+<span class="sd">    feature_col: str</span>
+<span class="sd">        the name of the feature column in df</span>
+<span class="sd">    label_col: str</span>
+<span class="sd">        the name of the label column in df</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    MLModel</span>
+<span class="sd">        the trained MLModel</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">trained_matcher</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="o">=</span><span class="n">feature_col</span><span class="p">,</span> <span class="n">label_column</span><span class="o">=</span><span class="n">label_col</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">trained_matcher</span></div>
+
+
+
+<div class="viewcode-block" id="apply_matcher">
+<a class="viewcode-back" href="../source/modules/tools.html#tools.apply_matcher">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_matcher</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">MLModel</span><span class="p">,</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span>  <span class="c1"># Any trained model (MLModel, sklearn, or spark)</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">feature_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">output_col</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    applies a trained model on unlabeled data</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model : MLModel, sklearn model, or spark model</span>
+<span class="sd">        The trained model to apply to the data. Can be:</span>
+<span class="sd">        - An MLModel instance (SKLearnModel or SparkMLModel)</span>
+<span class="sd">        - A trained sklearn model (any BaseEstimator)</span>
+<span class="sd">        - A trained spark model (any model with transform method)</span>
+<span class="sd">    df : pandas DataFrame</span>
+<span class="sd">        the DataFrame that you want to apply the model to</span>
+<span class="sd">    feature_col : str</span>
+<span class="sd">        the column that will be used to make a prediction</span>
+<span class="sd">    output_col : str</span>
+<span class="sd">        the column that will store the predicted label from the model</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pandas DataFrame</span>
+<span class="sd">        the DataFrame with a prediction column holding the predictions</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># If model is already an MLModel instance, use it directly</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">MLModel</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">feature_col</span><span class="p">,</span> <span class="n">output_col</span><span class="p">)</span>
+    
+    <span class="c1"># Otherwise wrap it in the appropriate MLModel class</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;transform&#39;</span><span class="p">):</span>  <span class="c1"># Spark model</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">ml_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkMLModel</span>
+        <span class="k">return</span> <span class="n">SparkMLModel</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">feature_col</span><span class="p">,</span> <span class="n">output_col</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># sklearn model</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">ml_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">SKLearnModel</span>
+        <span class="k">return</span> <span class="n">SKLearnModel</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">feature_col</span><span class="p">,</span> <span class="n">output_col</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="label_data">
+<a class="viewcode-back" href="../source/modules/tools.html#tools.label_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">label_data</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">MLModel</span><span class="p">,</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;batch&quot;</span><span class="p">,</span> <span class="s2">&quot;continuous&quot;</span><span class="p">],</span>
+    <span class="n">labeler</span><span class="p">:</span> <span class="n">labeler</span><span class="p">,</span>
+    <span class="n">fvs</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">seeds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    generate labeled data from unlabeled data using Batch Active Learning or Continuious Active Learning</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model : MLModel</span>
+<span class="sd">        the model object that will be used for training and applying to the data</span>
+<span class="sd">    mode : Literal[&quot;batch&quot;, &quot;continuous&quot;]</span>
+<span class="sd">        batch or continuous to determine which type of active learning to use</span>
+<span class="sd">    labeler : Labeler</span>
+<span class="sd">        the labeler object that will label data during active learning</span>
+<span class="sd">    fvs : pandas DataFrame</span>
+<span class="sd">        the data that needs to be labeled</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pandas DataFrame</span>
+<span class="sd">        DataFrame with ids of potential matches and the corresponding label</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">seeds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">seeds</span> <span class="o">=</span> <span class="n">select_seeds</span><span class="p">(</span><span class="n">fvs</span><span class="o">=</span><span class="n">fvs</span><span class="p">,</span> <span class="n">nseeds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">labeler</span><span class="o">=</span><span class="n">labeler</span><span class="p">,</span> <span class="n">score_column</span><span class="o">=</span><span class="s1">&#39;score&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;batch&quot;</span><span class="p">:</span>
+        <span class="n">learner</span> <span class="o">=</span> <span class="n">EntropyActiveLearner</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">labeler</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;continuous&quot;</span><span class="p">:</span>
+        <span class="n">learner</span> <span class="o">=</span> <span class="n">ContinuousEntropyActiveLearner</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">labeler</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fvs</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">fvs</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">fvs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fvs</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">seeds</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">seeds</span><span class="p">)</span>
+    <span class="n">labeled_data</span> <span class="o">=</span> <span class="n">learner</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">fvs</span><span class="p">,</span> <span class="n">seeds</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">labeled_data</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,167 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tests.unit.test_utils module &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">tests.unit.test_utils module</a><ul>
+<li><a class="reference internal" href="#tests.unit.test_utils.test_get_logger"><code class="docutils literal notranslate"><span class="pre">test_get_logger()</span></code></a></li>
+<li><a class="reference internal" href="#tests.unit.test_utils.test_is_null"><code class="docutils literal notranslate"><span class="pre">test_is_null()</span></code></a></li>
+<li><a class="reference internal" href="#tests.unit.test_utils.test_perfect_hash_function"><code class="docutils literal notranslate"><span class="pre">test_perfect_hash_function()</span></code></a></li>
+<li><a class="reference internal" href="#tests.unit.test_utils.test_perfect_hash_function_performance"><code class="docutils literal notranslate"><span class="pre">test_perfect_hash_function_performance()</span></code></a></li>
+<li><a class="reference internal" href="#tests.unit.test_utils.test_persisted"><code class="docutils literal notranslate"><span class="pre">test_persisted()</span></code></a></li>
+<li><a class="reference internal" href="#tests.unit.test_utils.test_repartition_df"><code class="docutils literal notranslate"><span class="pre">test_repartition_df()</span></code></a></li>
+<li><a class="reference internal" href="#tests.unit.test_utils.test_sparse_vec"><code class="docutils literal notranslate"><span class="pre">test_sparse_vec()</span></code></a></li>
+<li><a class="reference internal" href="#tests.unit.test_utils.test_type_check"><code class="docutils literal notranslate"><span class="pre">test_type_check()</span></code></a></li>
+<li><a class="reference internal" href="#tests.unit.test_utils.test_type_check_iterable"><code class="docutils literal notranslate"><span class="pre">test_type_check_iterable()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">tests.unit.test_utils module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/source/modules/tests.unit.test_utils.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-tests.unit.test_utils">
+<span id="tests-unit-test-utils-module"></span><h1>tests.unit.test_utils module<a class="headerlink" href="#module-tests.unit.test_utils" title="Link to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_utils.test_get_logger">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_utils.</span></span><span class="sig-name descname"><span class="pre">test_get_logger</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_utils.html#test_get_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_utils.test_get_logger" title="Link to this definition">¶</a></dt>
+<dd><p>Test logger creation.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_utils.test_is_null">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_utils.</span></span><span class="sig-name descname"><span class="pre">test_is_null</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_utils.html#test_is_null"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_utils.test_is_null" title="Link to this definition">¶</a></dt>
+<dd><p>Test null checking utility.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_utils.test_perfect_hash_function">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_utils.</span></span><span class="sig-name descname"><span class="pre">test_perfect_hash_function</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_utils.html#test_perfect_hash_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_utils.test_perfect_hash_function" title="Link to this definition">¶</a></dt>
+<dd><p>Test PerfectHashFunction validation.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_utils.test_perfect_hash_function_performance">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_utils.</span></span><span class="sig-name descname"><span class="pre">test_perfect_hash_function_performance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">benchmark</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_utils.html#test_perfect_hash_function_performance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_utils.test_perfect_hash_function_performance" title="Link to this definition">¶</a></dt>
+<dd><p>Benchmark perfect hash function performance.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_utils.test_persisted">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_utils.</span></span><span class="sig-name descname"><span class="pre">test_persisted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spark</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_utils.html#test_persisted"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_utils.test_persisted" title="Link to this definition">¶</a></dt>
+<dd><p>Test dataframe persistence context manager.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_utils.test_repartition_df">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_utils.</span></span><span class="sig-name descname"><span class="pre">test_repartition_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spark</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_utils.html#test_repartition_df"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_utils.test_repartition_df" title="Link to this definition">¶</a></dt>
+<dd><p>Test dataframe repartitioning.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_utils.test_sparse_vec">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_utils.</span></span><span class="sig-name descname"><span class="pre">test_sparse_vec</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_utils.html#test_sparse_vec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_utils.test_sparse_vec" title="Link to this definition">¶</a></dt>
+<dd><p>Test sparse vector operations.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_utils.test_type_check">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_utils.</span></span><span class="sig-name descname"><span class="pre">test_type_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_utils.html#test_type_check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_utils.test_type_check" title="Link to this definition">¶</a></dt>
+<dd><p>Test type checking utility.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.unit.test_utils.test_type_check_iterable">
+<span class="sig-prename descclassname"><span class="pre">tests.unit.test_utils.</span></span><span class="sig-name descname"><span class="pre">test_type_check_iterable</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tests/unit/test_utils.html#test_type_check_iterable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.unit.test_utils.test_type_check_iterable" title="Link to this definition">¶</a></dt>
+<dd><p>Test iterable type checking utility.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

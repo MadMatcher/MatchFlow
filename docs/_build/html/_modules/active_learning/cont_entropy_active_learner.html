@@ -1,0 +1,367 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>active_learning.cont_entropy_active_learner &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">active_learning.cont_entropy_active_learner</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for active_learning.cont_entropy_active_learner</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pyspark.sql.functions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>    
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyspark.sql.types</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">T</span>    
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span><span class="p">,</span> <span class="n">copy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">persisted</span><span class="p">,</span> <span class="n">get_logger</span><span class="p">,</span> <span class="n">repartition_df</span><span class="p">,</span> <span class="n">type_check</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">labeler</span><span class="w"> </span><span class="kn">import</span> <span class="n">Labeler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ml_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLModel</span><span class="p">,</span> <span class="n">SKLearnModel</span><span class="p">,</span> <span class="n">convert_to_array</span><span class="p">,</span> <span class="n">convert_to_vector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.ml.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">vector_to_array</span><span class="p">,</span> <span class="n">array_to_vector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">queue</span><span class="w"> </span><span class="kn">import</span> <span class="n">PriorityQueue</span><span class="p">,</span> <span class="n">Queue</span><span class="p">,</span> <span class="n">Empty</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">threading</span><span class="w"> </span><span class="kn">import</span> <span class="n">Thread</span><span class="p">,</span> <span class="n">Event</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyspark</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">ceil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+    
+    
+<div class="viewcode-block" id="ContinuousEntropyActiveLearner">
+<a class="viewcode-back" href="../../source/modules/active_learning.cont_entropy_active_learner.html#active_learning.cont_entropy_active_learner.ContinuousEntropyActiveLearner">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ContinuousEntropyActiveLearner</span><span class="p">:</span>    
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">labeler</span><span class="p">,</span> <span class="n">queue_size</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">max_labeled</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span> <span class="n">on_demand_stop</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>    
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        model : MLModel</span>
+<span class="sd">            the model to be trained</span>
+
+<span class="sd">        labeler : Labeler</span>
+<span class="sd">            the labeler that will be used to label batches during active learning</span>
+
+<span class="sd">        queue_size : int</span>
+<span class="sd">            the number of examples to queue during active learning</span>
+
+<span class="sd">        max_labeled : int </span>
+<span class="sd">            the maximum number of examples that will be labeled, only necessary if on_demand_stop is False</span>
+
+<span class="sd">        on_demand_stop : bool</span>
+<span class="sd">            if True, the active learning will stop when the user stops labeling</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_init_args</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">labeler</span><span class="p">,</span> <span class="n">queue_size</span><span class="p">,</span> <span class="n">max_labeled</span><span class="p">,</span> <span class="n">on_demand_stop</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue_size</span> <span class="o">=</span> <span class="n">queue_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_max_labeled</span> <span class="o">=</span> <span class="n">max_labeled</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_on_demand_stop</span> <span class="o">=</span> <span class="n">on_demand_stop</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_min_batch_size</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_labeler</span> <span class="o">=</span> <span class="n">labeler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_terminate_if_label_everything</span> <span class="o">=</span> <span class="kc">False</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_init_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">labeler</span><span class="p">,</span> <span class="n">queue_size</span><span class="p">,</span> <span class="n">max_labeled</span><span class="p">,</span> <span class="n">on_demand_stop</span><span class="p">):</span>
+
+        <span class="n">type_check</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="n">MLModel</span><span class="p">)</span>
+        <span class="n">type_check</span><span class="p">(</span><span class="n">labeler</span><span class="p">,</span> <span class="s1">&#39;labeler&#39;</span><span class="p">,</span> <span class="n">Labeler</span><span class="p">)</span>
+        <span class="n">type_check</span><span class="p">(</span><span class="n">queue_size</span><span class="p">,</span> <span class="s1">&#39;queue_size&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="n">type_check</span><span class="p">(</span><span class="n">max_labeled</span><span class="p">,</span> <span class="s1">&#39;max_labeled&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">queue_size</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;queue_size must be &gt; 0&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_labeled</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;max_labeled must be &gt; 0&#39;</span><span class="p">)</span>
+        <span class="n">type_check</span><span class="p">(</span><span class="n">on_demand_stop</span><span class="p">,</span> <span class="s1">&#39;on_demand_stop&#39;</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_select_training_vectors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fvs</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fvs</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s1">&#39;_id&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_pos_negative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">):</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">neg</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="o">-</span> <span class="n">pos</span>
+
+        <span class="k">return</span> <span class="n">pos</span><span class="p">,</span> <span class="n">neg</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_label_everything</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fvs</span><span class="p">):</span>
+        <span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="n">fvs</span><span class="o">.</span><span class="n">toPandas</span><span class="p">()</span>
+        <span class="n">batch</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[[</span><span class="s1">&#39;id1&#39;</span><span class="p">,</span> <span class="s1">&#39;id2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_labeler</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">batch</span><span class="p">[</span><span class="s1">&#39;labeled_in_iteration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span> <span class="o">=</span> <span class="n">batch</span>
+        <span class="n">training_fvs</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">training_fvs</span><span class="p">,</span> <span class="s1">&#39;features&#39;</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prep_fvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fvs</span><span class="p">):</span>
+        <span class="c1"># fvs(_id, id1, id2, features)</span>
+        <span class="n">fvs</span> <span class="o">=</span> <span class="n">repartition_df</span><span class="p">(</span><span class="n">fvs</span><span class="p">,</span> <span class="mi">25000</span><span class="p">,</span> <span class="s1">&#39;_id&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">prep_fvs</span><span class="p">(</span><span class="n">fvs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ContinuousEntropyActiveLearner.train">
+<a class="viewcode-back" href="../../source/modules/active_learning.cont_entropy_active_learner.html#active_learning.cont_entropy_active_learner.ContinuousEntropyActiveLearner.train">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fvs</span><span class="p">,</span> <span class="n">seeds</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        run active learning</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fvs : pyspark.sql.DataFrame</span>
+<span class="sd">            the feature vectors for training, schema must contain (_id Any, id1 long, id2 long, features array&lt;double or float&gt;)</span>
+
+<span class="sd">        start_ids : List of _id</span>
+<span class="sd">            the ids of the seed feature vectors for starting active learning, these must be present in `fvs`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">type_check</span><span class="p">(</span><span class="n">fvs</span><span class="p">,</span> <span class="s1">&#39;fvs&#39;</span><span class="p">,</span> <span class="n">pyspark</span><span class="o">.</span><span class="n">sql</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span>
+
+        <span class="n">to_be_label_queue</span> <span class="o">=</span> <span class="n">PriorityQueue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_queue_size</span><span class="p">)</span>
+        <span class="n">labeled_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_queue_size</span> <span class="o">*</span> <span class="mi">5</span><span class="p">)</span>
+
+        <span class="n">stop_training</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
+
+        <span class="n">training_thread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_training_loop</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">to_be_label_queue</span><span class="p">,</span> <span class="n">labeled_queue</span><span class="p">,</span> <span class="n">stop_training</span><span class="p">,</span> <span class="n">fvs</span><span class="p">,</span> <span class="n">seeds</span><span class="p">))</span>
+        <span class="n">training_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="c1"># run labeler in main thread</span>
+        <span class="n">nlabeled</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">seeds</span><span class="p">)</span>
+        <span class="c1">#log.info(&#39;running training&#39;)</span>
+        <span class="n">terminate</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">pos</span><span class="p">,</span> <span class="n">neg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_pos_negative</span><span class="p">(</span><span class="n">seeds</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]))</span>
+        <span class="c1"># if on_demand_stop is True, the active learning will stop when the user stops labeling</span>
+        <span class="c1"># if on_demand_stop is False, the active learning will run until the max_labeled examples are labeled</span>
+        <span class="k">while</span> <span class="p">(</span><span class="ow">not</span> <span class="n">terminate</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_demand_stop</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">nlabeled</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_labeled</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_demand_stop</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">example</span> <span class="o">=</span> <span class="n">to_be_label_queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">item</span>
+            <span class="k">except</span> <span class="n">Empty</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">training_thread</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;label queue is empty by training thread is dead, likely due to an exception during training&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># example gotten, label and send back to training thread</span>
+                <span class="n">example</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_labeler</span><span class="p">(</span><span class="n">example</span><span class="p">[</span><span class="s1">&#39;id1&#39;</span><span class="p">],</span> <span class="n">example</span><span class="p">[</span><span class="s1">&#39;id2&#39;</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="n">example</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;user stopped labeling, terminating active learning&#39;</span><span class="p">)</span>
+                    <span class="n">terminate</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">elif</span> <span class="n">example</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="mf">2.0</span><span class="p">:</span>
+                    <span class="n">labeled_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+                    <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">example</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mf">1.0</span> <span class="k">else</span> <span class="mi">0</span>
+                    <span class="n">neg</span> <span class="o">+=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">example</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.0</span> <span class="k">else</span> <span class="mi">0</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;total positive = </span><span class="si">{</span><span class="n">pos</span><span class="si">}</span><span class="s1"> negative = </span><span class="si">{</span><span class="n">neg</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">nlabeled</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># signal training thread to stop and wait for termination</span>
+        <span class="n">stop_training</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+        <span class="n">training_thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+        <span class="n">labeled_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">labeled_data</span></div>
+
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_training_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_be_label_queue</span><span class="p">,</span> <span class="n">labeled_queue</span><span class="p">,</span> <span class="n">stop_event</span><span class="p">,</span> <span class="n">fvs</span><span class="p">,</span> <span class="n">seeds</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="s2">&quot;spark.ui.showConsoleProgress&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+
+            <span class="n">fvs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prep_fvs</span><span class="p">(</span><span class="n">fvs</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="n">persisted</span><span class="p">(</span><span class="n">fvs</span><span class="p">)</span> <span class="k">as</span> <span class="n">fvs</span><span class="p">:</span>
+                <span class="n">n_fvs</span> <span class="o">=</span> <span class="n">fvs</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+                <span class="c1"># just label everything and return </span>
+                <span class="k">if</span> <span class="n">n_fvs</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">seeds</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_labeled</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_demand_stop</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_terminate_if_label_everything</span><span class="p">:</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;running al to completion would label everything, labeling all fvs and returning&#39;</span><span class="p">)</span>
+                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_label_everything</span><span class="p">(</span><span class="n">fvs</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;running al to completion would label everything, but self._terminate_if_label_everything is False so AL will still run&#39;</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span> <span class="o">=</span> <span class="n">seeds</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;_id&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="c1"># seed feature vectors</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="p">[</span><span class="s1">&#39;labeled_in_iteration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+                <span class="n">schema</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="p">)</span><span class="o">.</span><span class="n">schema</span>
+
+                <span class="n">total_pos</span><span class="p">,</span> <span class="n">total_neg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_pos_negative</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">total_pos</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">total_neg</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;total positive = </span><span class="si">{</span><span class="n">total_pos</span><span class="si">}</span><span class="s1"> negative = </span><span class="si">{</span><span class="n">total_neg</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;both postive and negative vectors are required for training&#39;</span><span class="p">)</span>
+
+                
+                <span class="n">i</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+                <span class="k">while</span> <span class="ow">not</span> <span class="n">stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="c1"># wait for more stuff to be labeled, but check stop event</span>
+                    <span class="k">while</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_queue_size</span> <span class="o">-</span> <span class="n">to_be_label_queue</span><span class="o">.</span><span class="n">qsize</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_batch_size</span> 
+                           <span class="ow">and</span> <span class="ow">not</span> <span class="n">stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">()):</span>
+                        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                    
+                    <span class="c1"># If stop event is set, break out of the main loop</span>
+                    <span class="k">if</span> <span class="n">stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+                        <span class="k">break</span>
+                    
+                    <span class="c1"># get new labeled examples</span>
+                    <span class="n">new_examples</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">while</span> <span class="ow">not</span> <span class="n">labeled_queue</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+                        <span class="n">new_examples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">labeled_queue</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+                    <span class="c1"># add new examples if there are any</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_examples</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">new_examples</span><span class="p">)</span>
+
+                        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;labeled_in_iteration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;labeled_in_iteration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;labeled_in_iteration&#39;</span><span class="p">]</span>
+                    
+                    <span class="c1"># train model</span>
+                    <span class="c1">#log.info(&#39;training model&#39;)</span>
+                    <span class="n">training_fvs</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>\
+                                        <span class="o">.</span><span class="n">repartition</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="p">)</span> <span class="o">//</span> <span class="mi">100</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;_id&#39;</span><span class="p">)</span>\
+                                        <span class="o">.</span><span class="n">persist</span><span class="p">()</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span>
+                            <span class="n">training_fvs</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]),</span>
+                            <span class="s1">&#39;features&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;label&#39;</span>
+                    <span class="p">)</span>
+
+                    <span class="n">cand_fvs</span> <span class="o">=</span> <span class="n">fvs</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">training_fvs</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;_id&#39;</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left_anti&#39;</span><span class="p">)</span>
+                    <span class="c1">#log.info(&#39;selecting and labeling new examples&#39;)</span>
+                    <span class="c1"># number of examples to replenish in the queue</span>
+                    <span class="n">batch_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue_size</span> <span class="o">-</span> <span class="n">to_be_label_queue</span><span class="o">.</span><span class="n">qsize</span><span class="p">()</span>
+                    <span class="c1"># get next labeled batch</span>
+                    <span class="c1"># sort by ids to make training consistent </span>
+                    <span class="n">new_labeled_batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">entropy</span><span class="p">(</span><span class="n">cand_fvs</span><span class="p">,</span> <span class="s1">&#39;features&#39;</span><span class="p">,</span> <span class="s1">&#39;entropy&#39;</span><span class="p">)</span>\
+                                            <span class="o">.</span><span class="n">sort</span><span class="p">([</span><span class="s1">&#39;entropy&#39;</span><span class="p">,</span> <span class="s1">&#39;_id&#39;</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>\
+                                            <span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>\
+                                            <span class="o">.</span><span class="n">toPandas</span><span class="p">()</span>\
+                                            <span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;_id&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+                    <span class="n">new_labeled_batch</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="p">,</span> <span class="n">new_labeled_batch</span><span class="p">])</span>
+
+                    <span class="n">training_fvs</span><span class="o">.</span><span class="n">unpersist</span><span class="p">()</span>
+                    
+                    <span class="c1"># push examples to the queue to be labeled</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">new_labeled_batch</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                        <span class="n">ent</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;entropy&#39;</span><span class="p">)</span>
+                        <span class="n">to_be_label_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">PQueueItem</span><span class="p">(</span><span class="n">ent</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+
+                    <span class="c1">#total_pos, total_neg = self._get_pos_negative(self.local_training_fvs_.dropna(subset=[&#39;label&#39;]))</span>
+
+                    <span class="c1">#log.info(f&#39;total positive = {total_pos} negative = {total_neg}&#39;)</span>
+                    
+                    <span class="k">if</span> <span class="n">n_fvs</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="p">):</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;all fvs labeled, terminating active learning&#39;</span><span class="p">)</span>
+                        <span class="k">break</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">])</span>
+                <span class="n">training_fvs</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_training_fvs_</span><span class="p">)</span>
+                <span class="c1"># final train model</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">training_fvs</span><span class="p">,</span> <span class="s1">&#39;features&#39;</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">())</span>
+
+
+        <span class="k">return</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="PQueueItem">
+<a class="viewcode-back" href="../../source/modules/active_learning.cont_entropy_active_learner.html#active_learning.cont_entropy_active_learner.PQueueItem">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PQueueItem</span><span class="p">:</span>
+    <span class="n">entropy</span> <span class="p">:</span> <span class="nb">float</span>
+    <span class="n">item</span> <span class="p">:</span> <span class="n">Any</span><span class="o">=</span><span class="n">field</span><span class="p">(</span><span class="n">compare</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+    
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

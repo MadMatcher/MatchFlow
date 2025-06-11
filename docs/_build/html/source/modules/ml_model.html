@@ -1,0 +1,1669 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Machine Learning Models &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Machine Learning Models</a><ul>
+<li><a class="reference internal" href="#ml_model.MLModel"><code class="docutils literal notranslate"><span class="pre">MLModel</span></code></a><ul>
+<li><a class="reference internal" href="#ml_model.MLModel.nan_fill"><code class="docutils literal notranslate"><span class="pre">MLModel.nan_fill</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.MLModel.use_vectors"><code class="docutils literal notranslate"><span class="pre">MLModel.use_vectors</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.MLModel.use_floats"><code class="docutils literal notranslate"><span class="pre">MLModel.use_floats</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.MLModel.entropy"><code class="docutils literal notranslate"><span class="pre">MLModel.entropy()</span></code></a></li>
+<li><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">MLModel.nan_fill</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.MLModel.params_dict"><code class="docutils literal notranslate"><span class="pre">MLModel.params_dict()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.MLModel.predict"><code class="docutils literal notranslate"><span class="pre">MLModel.predict()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.MLModel.prediction_conf"><code class="docutils literal notranslate"><span class="pre">MLModel.prediction_conf()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.MLModel.prep_fvs"><code class="docutils literal notranslate"><span class="pre">MLModel.prep_fvs()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.MLModel.train"><code class="docutils literal notranslate"><span class="pre">MLModel.train()</span></code></a></li>
+<li><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">MLModel.use_floats</span></code></a></li>
+<li><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">MLModel.use_vectors</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ml_model.SKLearnModel"><code class="docutils literal notranslate"><span class="pre">SKLearnModel</span></code></a><ul>
+<li><a class="reference internal" href="#ml_model.SKLearnModel.cross_val_scores"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.cross_val_scores()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SKLearnModel.entropy"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.entropy()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SKLearnModel.get_model"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.get_model()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SKLearnModel.nan_fill"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.nan_fill</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SKLearnModel.params_dict"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.params_dict()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SKLearnModel.predict"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.predict()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SKLearnModel.prediction_conf"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.prediction_conf()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SKLearnModel.train"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.train()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SKLearnModel.trained_model"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.trained_model</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SKLearnModel.use_floats"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.use_floats</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SKLearnModel.use_vectors"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.use_vectors</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ml_model.SparkMLModel"><code class="docutils literal notranslate"><span class="pre">SparkMLModel</span></code></a><ul>
+<li><a class="reference internal" href="#ml_model.SparkMLModel.entropy"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.entropy()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SparkMLModel.get_model"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.get_model()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SparkMLModel.nan_fill"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.nan_fill</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SparkMLModel.params_dict"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.params_dict()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SparkMLModel.predict"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.predict()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SparkMLModel.prediction_conf"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.prediction_conf()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SparkMLModel.train"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.train()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SparkMLModel.use_floats"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.use_floats</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.SparkMLModel.use_vectors"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.use_vectors</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ml_model.convert_to_array"><code class="docutils literal notranslate"><span class="pre">convert_to_array()</span></code></a></li>
+<li><a class="reference internal" href="#ml_model.convert_to_vector"><code class="docutils literal notranslate"><span class="pre">convert_to_vector()</span></code></a></li>
+<li><a class="reference internal" href="#mlmodel-base-class">MLModel Base Class</a><ul>
+<li><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">MLModel</span></code></a><ul>
+<li><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">MLModel.nan_fill</span></code></a></li>
+<li><a class="reference internal" href="#id5"><code class="docutils literal notranslate"><span class="pre">MLModel.use_vectors</span></code></a></li>
+<li><a class="reference internal" href="#id6"><code class="docutils literal notranslate"><span class="pre">MLModel.use_floats</span></code></a></li>
+<li><a class="reference internal" href="#id7"><code class="docutils literal notranslate"><span class="pre">MLModel.nan_fill</span></code></a></li>
+<li><a class="reference internal" href="#id8"><code class="docutils literal notranslate"><span class="pre">MLModel.use_vectors</span></code></a></li>
+<li><a class="reference internal" href="#id9"><code class="docutils literal notranslate"><span class="pre">MLModel.use_floats</span></code></a></li>
+<li><a class="reference internal" href="#id10"><code class="docutils literal notranslate"><span class="pre">MLModel.predict()</span></code></a></li>
+<li><a class="reference internal" href="#id11"><code class="docutils literal notranslate"><span class="pre">MLModel.prediction_conf()</span></code></a></li>
+<li><a class="reference internal" href="#id12"><code class="docutils literal notranslate"><span class="pre">MLModel.entropy()</span></code></a></li>
+<li><a class="reference internal" href="#id13"><code class="docutils literal notranslate"><span class="pre">MLModel.train()</span></code></a></li>
+<li><a class="reference internal" href="#id14"><code class="docutils literal notranslate"><span class="pre">MLModel.params_dict()</span></code></a></li>
+<li><a class="reference internal" href="#id15"><code class="docutils literal notranslate"><span class="pre">MLModel.prep_fvs()</span></code></a></li>
+<li><a class="reference internal" href="#id16"><code class="docutils literal notranslate"><span class="pre">MLModel.entropy()</span></code></a></li>
+<li><a class="reference internal" href="#id17"><code class="docutils literal notranslate"><span class="pre">MLModel.nan_fill</span></code></a></li>
+<li><a class="reference internal" href="#id18"><code class="docutils literal notranslate"><span class="pre">MLModel.params_dict()</span></code></a></li>
+<li><a class="reference internal" href="#id19"><code class="docutils literal notranslate"><span class="pre">MLModel.predict()</span></code></a></li>
+<li><a class="reference internal" href="#id20"><code class="docutils literal notranslate"><span class="pre">MLModel.prediction_conf()</span></code></a></li>
+<li><a class="reference internal" href="#id21"><code class="docutils literal notranslate"><span class="pre">MLModel.prep_fvs()</span></code></a></li>
+<li><a class="reference internal" href="#id22"><code class="docutils literal notranslate"><span class="pre">MLModel.train()</span></code></a></li>
+<li><a class="reference internal" href="#id23"><code class="docutils literal notranslate"><span class="pre">MLModel.use_floats</span></code></a></li>
+<li><a class="reference internal" href="#id24"><code class="docutils literal notranslate"><span class="pre">MLModel.use_vectors</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sklearnmodel">SKLearnModel</a><ul>
+<li><a class="reference internal" href="#id25"><code class="docutils literal notranslate"><span class="pre">SKLearnModel</span></code></a><ul>
+<li><a class="reference internal" href="#id26"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.predict()</span></code></a></li>
+<li><a class="reference internal" href="#id27"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.prediction_conf()</span></code></a></li>
+<li><a class="reference internal" href="#id28"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.entropy()</span></code></a></li>
+<li><a class="reference internal" href="#id29"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.train()</span></code></a></li>
+<li><a class="reference internal" href="#id30"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.cross_val_scores()</span></code></a></li>
+<li><a class="reference internal" href="#id31"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.cross_val_scores()</span></code></a></li>
+<li><a class="reference internal" href="#id32"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.entropy()</span></code></a></li>
+<li><a class="reference internal" href="#id33"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.get_model()</span></code></a></li>
+<li><a class="reference internal" href="#id34"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.nan_fill</span></code></a></li>
+<li><a class="reference internal" href="#id35"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.params_dict()</span></code></a></li>
+<li><a class="reference internal" href="#id36"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.predict()</span></code></a></li>
+<li><a class="reference internal" href="#id37"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.prediction_conf()</span></code></a></li>
+<li><a class="reference internal" href="#id38"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.train()</span></code></a></li>
+<li><a class="reference internal" href="#id39"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.trained_model</span></code></a></li>
+<li><a class="reference internal" href="#id40"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.use_floats</span></code></a></li>
+<li><a class="reference internal" href="#id41"><code class="docutils literal notranslate"><span class="pre">SKLearnModel.use_vectors</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sparkmlmodel">SparkMLModel</a><ul>
+<li><a class="reference internal" href="#id42"><code class="docutils literal notranslate"><span class="pre">SparkMLModel</span></code></a><ul>
+<li><a class="reference internal" href="#id43"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.predict()</span></code></a></li>
+<li><a class="reference internal" href="#id44"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.prediction_conf()</span></code></a></li>
+<li><a class="reference internal" href="#id45"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.entropy()</span></code></a></li>
+<li><a class="reference internal" href="#id46"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.train()</span></code></a></li>
+<li><a class="reference internal" href="#id47"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.entropy()</span></code></a></li>
+<li><a class="reference internal" href="#id48"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.get_model()</span></code></a></li>
+<li><a class="reference internal" href="#id49"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.nan_fill</span></code></a></li>
+<li><a class="reference internal" href="#id50"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.params_dict()</span></code></a></li>
+<li><a class="reference internal" href="#id51"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.predict()</span></code></a></li>
+<li><a class="reference internal" href="#id52"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.prediction_conf()</span></code></a></li>
+<li><a class="reference internal" href="#id53"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.train()</span></code></a></li>
+<li><a class="reference internal" href="#id54"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.use_floats</span></code></a></li>
+<li><a class="reference internal" href="#id55"><code class="docutils literal notranslate"><span class="pre">SparkMLModel.use_vectors</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#utility-functions">Utility Functions</a><ul>
+<li><a class="reference internal" href="#id56"><code class="docutils literal notranslate"><span class="pre">convert_to_vector()</span></code></a></li>
+<li><a class="reference internal" href="#id57"><code class="docutils literal notranslate"><span class="pre">convert_to_array()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Machine Learning Models</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/source/modules/ml_model.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="machine-learning-models">
+<h1>Machine Learning Models<a class="headerlink" href="#machine-learning-models" title="Link to this heading">¶</a></h1>
+<p id="module-ml_model">Machine Learning Model base classes and implementations.</p>
+<p>This module provides base classes and implementations for machine learning models,
+supporting both scikit-learn and PySpark ML models. It includes functionality for
+training, prediction, confidence estimation, and entropy calculation.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="ml_model.MLModel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ml_model.</span></span><span class="sig-name descname"><span class="pre">MLModel</span></span><a class="reference internal" href="../../_modules/ml_model.html#MLModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.MLModel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for machine learning models.</p>
+<p>This class defines the interface that all machine learning models must implement,
+whether they are scikit-learn models or PySpark ML models. It provides methods
+for training, prediction, confidence estimation, and entropy calculation.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_model.MLModel.nan_fill">
+<span class="sig-name descname"><span class="pre">nan_fill</span></span><a class="headerlink" href="#ml_model.MLModel.nan_fill" title="Link to this definition">¶</a></dt>
+<dd><p>Value to use for filling NaN values in feature vectors</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_model.MLModel.use_vectors">
+<span class="sig-name descname"><span class="pre">use_vectors</span></span><a class="headerlink" href="#ml_model.MLModel.use_vectors" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model expects feature vectors in vector format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ml_model.MLModel.use_floats">
+<span class="sig-name descname"><span class="pre">use_floats</span></span><a class="headerlink" href="#ml_model.MLModel.use_floats" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model uses float32 (True) or float64 (False) precision</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.MLModel.entropy">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.MLModel.entropy" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate entropy of predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store entropy values in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with entropy values added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id0">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nan_fill</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#id0" title="Link to this definition">¶</a></dt>
+<dd><p>Value to use for filling NaN values in feature vectors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The value to use for filling NaN values, or None if no filling is needed</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.MLModel.params_dict">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">params_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.params_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.MLModel.params_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Get a dictionary of model parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing model parameters and configuration</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.MLModel.predict">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.MLModel.predict" title="Link to this definition">¶</a></dt>
+<dd><p>Make predictions using the trained model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors to predict on</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store predictions in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with predictions added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.MLModel.prediction_conf">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prediction_conf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.prediction_conf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.MLModel.prediction_conf" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate prediction confidence scores.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing true labels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with confidence scores added</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.MLModel.prep_fvs">
+<span class="sig-name descname"><span class="pre">prep_fvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fvs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'features'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.prep_fvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.MLModel.prep_fvs" title="Link to this definition">¶</a></dt>
+<dd><p>Prepare feature vectors for model input.</p>
+<p>This method handles NaN filling and conversion between vector and array formats
+based on the model’s requirements.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fvs</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – DataFrame containing feature vectors</p></li>
+<li><p><strong>feature_col</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the column containing feature vectors</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with prepared feature vectors</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.MLModel.train">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.MLModel.train" title="Link to this definition">¶</a></dt>
+<dd><p>Train the model on the given data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing training data</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing labels</p></li>
+<li><p><strong>return_estimator</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the trained estimator instead of self</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The trained model (self) or the trained estimator if return_estimator is True</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#id3" title="ml_model.MLModel">MLModel</a> or BaseEstimator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id1">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_floats</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#id1" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model uses float32 or float64 precision.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model uses float32, False if it uses float64</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id2">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_vectors</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#id2" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model expects feature vectors in vector format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model expects vectors, False if it expects arrays</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ml_model.SKLearnModel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ml_model.</span></span><span class="sig-name descname"><span class="pre">SKLearnModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nan_fill</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_floats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'local'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SKLearnModel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#id3" title="ml_model.MLModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">MLModel</span></code></a></p>
+<p>Scikit-learn model wrapper.</p>
+<p>This class wraps scikit-learn models to provide a consistent interface
+with PySpark ML models. It handles conversion between pandas and PySpark
+DataFrames, and manages model training and prediction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>sklearn.base.BaseEstimator</em><em> or </em><em>type</em>) – The scikit-learn model class or instance to use</p></li>
+<li><p><strong>nan_fill</strong> (<em>float</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Value to use for filling NaN values</p></li>
+<li><p><strong>use_floats</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use float32 (True) or float64 (False) precision</p></li>
+<li><p><strong>execution</strong> (<em>str</em><em>, </em><em>optional</em>) – Execution mode: “local” for pandas or “spark” for PySpark</p></li>
+<li><p><strong>**model_args</strong> (<em>dict</em>) – Additional arguments to pass to the model constructor</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.SKLearnModel.cross_val_scores">
+<span class="sig-name descname"><span class="pre">cross_val_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.cross_val_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SKLearnModel.cross_val_scores" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.SKLearnModel.entropy">
+<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SKLearnModel.entropy" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate entropy of predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store entropy values in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with entropy values added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.SKLearnModel.get_model">
+<span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SKLearnModel.get_model" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ml_model.SKLearnModel.nan_fill">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nan_fill</span></span><a class="headerlink" href="#ml_model.SKLearnModel.nan_fill" title="Link to this definition">¶</a></dt>
+<dd><p>Value to use for filling NaN values in feature vectors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The value to use for filling NaN values, or None if no filling is needed</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.SKLearnModel.params_dict">
+<span class="sig-name descname"><span class="pre">params_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.params_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SKLearnModel.params_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Get a dictionary of model parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing model parameters and configuration</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.SKLearnModel.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SKLearnModel.predict" title="Link to this definition">¶</a></dt>
+<dd><p>Make predictions using the trained model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors to predict on</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store predictions in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with predictions added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.SKLearnModel.prediction_conf">
+<span class="sig-name descname"><span class="pre">prediction_conf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.prediction_conf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SKLearnModel.prediction_conf" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate prediction confidence scores.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing true labels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with confidence scores added</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.SKLearnModel.train">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SKLearnModel.train" title="Link to this definition">¶</a></dt>
+<dd><p>Train the model on the given data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing training data</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing labels</p></li>
+<li><p><strong>return_estimator</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the trained estimator instead of self</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The trained model (self) or the trained estimator if return_estimator is True</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#id3" title="ml_model.MLModel">MLModel</a> or BaseEstimator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ml_model.SKLearnModel.trained_model">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">trained_model</span></span><a class="headerlink" href="#ml_model.SKLearnModel.trained_model" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ml_model.SKLearnModel.use_floats">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_floats</span></span><a class="headerlink" href="#ml_model.SKLearnModel.use_floats" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model uses float32 or float64 precision.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model uses float32, False if it uses float64</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ml_model.SKLearnModel.use_vectors">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_vectors</span></span><a class="headerlink" href="#ml_model.SKLearnModel.use_vectors" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model expects feature vectors in vector format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model expects vectors, False if it expects arrays</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ml_model.SparkMLModel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ml_model.</span></span><span class="sig-name descname"><span class="pre">SparkMLModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nan_fill</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SparkMLModel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#id3" title="ml_model.MLModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">MLModel</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.SparkMLModel.entropy">
+<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SparkMLModel.entropy" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate entropy of predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store entropy values in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with entropy values added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.SparkMLModel.get_model">
+<span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SparkMLModel.get_model" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ml_model.SparkMLModel.nan_fill">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nan_fill</span></span><a class="headerlink" href="#ml_model.SparkMLModel.nan_fill" title="Link to this definition">¶</a></dt>
+<dd><p>Value to use for filling NaN values in feature vectors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The value to use for filling NaN values, or None if no filling is needed</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.SparkMLModel.params_dict">
+<span class="sig-name descname"><span class="pre">params_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.params_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SparkMLModel.params_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Get a dictionary of model parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing model parameters and configuration</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.SparkMLModel.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SparkMLModel.predict" title="Link to this definition">¶</a></dt>
+<dd><p>Make predictions using the trained model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors to predict on</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store predictions in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with predictions added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.SparkMLModel.prediction_conf">
+<span class="sig-name descname"><span class="pre">prediction_conf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.prediction_conf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SparkMLModel.prediction_conf" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate prediction confidence scores.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing true labels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with confidence scores added</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ml_model.SparkMLModel.train">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.SparkMLModel.train" title="Link to this definition">¶</a></dt>
+<dd><p>Train the model on the given data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing training data</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing labels</p></li>
+<li><p><strong>return_estimator</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the trained estimator instead of self</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The trained model (self) or the trained estimator if return_estimator is True</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#id3" title="ml_model.MLModel">MLModel</a> or BaseEstimator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ml_model.SparkMLModel.use_floats">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_floats</span></span><a class="headerlink" href="#ml_model.SparkMLModel.use_floats" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model uses float32 or float64 precision.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model uses float32, False if it uses float64</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ml_model.SparkMLModel.use_vectors">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_vectors</span></span><a class="headerlink" href="#ml_model.SparkMLModel.use_vectors" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model expects feature vectors in vector format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model expects vectors, False if it expects arrays</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_model.convert_to_array">
+<span class="sig-prename descclassname"><span class="pre">ml_model.</span></span><span class="sig-name descname"><span class="pre">convert_to_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#convert_to_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.convert_to_array" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ml_model.convert_to_vector">
+<span class="sig-prename descclassname"><span class="pre">ml_model.</span></span><span class="sig-name descname"><span class="pre">convert_to_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#convert_to_vector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ml_model.convert_to_vector" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<section id="mlmodel-base-class">
+<h2>MLModel Base Class<a class="headerlink" href="#mlmodel-base-class" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="id3">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ml_model.</span></span><span class="sig-name descname"><span class="pre">MLModel</span></span><a class="reference internal" href="../../_modules/ml_model.html#MLModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id3" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for machine learning models.</p>
+<p>This class defines the interface that all machine learning models must implement,
+whether they are scikit-learn models or PySpark ML models. It provides methods
+for training, prediction, confidence estimation, and entropy calculation.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">nan_fill</span></span><a class="headerlink" href="#id4" title="Link to this definition">¶</a></dt>
+<dd><p>Value to use for filling NaN values in feature vectors</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-name descname"><span class="pre">use_vectors</span></span><a class="headerlink" href="#id5" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model expects feature vectors in vector format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-name descname"><span class="pre">use_floats</span></span><a class="headerlink" href="#id6" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model uses float32 (True) or float64 (False) precision</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Abstract Properties</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">nan_fill</span></span><a class="headerlink" href="#id7" title="Link to this definition">¶</a></dt>
+<dd><p>Value to use for filling NaN values in feature vectors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The value to use for filling NaN values, or None if no filling is needed</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id8">
+<span class="sig-name descname"><span class="pre">use_vectors</span></span><a class="headerlink" href="#id8" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model expects feature vectors in vector format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model expects vectors, False if it expects arrays</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id9">
+<span class="sig-name descname"><span class="pre">use_floats</span></span><a class="headerlink" href="#id9" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model uses float32 or float64 precision.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model uses float32, False if it uses float64</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Abstract Methods</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="id10">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id10" title="Link to this definition">¶</a></dt>
+<dd><p>Make predictions using the trained model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors to predict on</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store predictions in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with predictions added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id11">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prediction_conf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.prediction_conf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id11" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate prediction confidence scores.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing true labels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with confidence scores added</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id12">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id12" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate entropy of predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store entropy values in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with entropy values added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id13">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id13" title="Link to this definition">¶</a></dt>
+<dd><p>Train the model on the given data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing training data</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing labels</p></li>
+<li><p><strong>return_estimator</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the trained estimator instead of self</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The trained model (self) or the trained estimator if return_estimator is True</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#id3" title="ml_model.MLModel">MLModel</a> or BaseEstimator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id14">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">params_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.params_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id14" title="Link to this definition">¶</a></dt>
+<dd><p>Get a dictionary of model parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing model parameters and configuration</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Concrete Methods</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="id15">
+<span class="sig-name descname"><span class="pre">prep_fvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fvs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'features'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.prep_fvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id15" title="Link to this definition">¶</a></dt>
+<dd><p>Prepare feature vectors for model input.</p>
+<p>This method handles NaN filling and conversion between vector and array formats
+based on the model’s requirements.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fvs</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – DataFrame containing feature vectors</p></li>
+<li><p><strong>feature_col</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the column containing feature vectors</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with prepared feature vectors</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id16">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id16" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate entropy of predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store entropy values in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with entropy values added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id17">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nan_fill</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#id17" title="Link to this definition">¶</a></dt>
+<dd><p>Value to use for filling NaN values in feature vectors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The value to use for filling NaN values, or None if no filling is needed</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id18">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">params_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.params_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id18" title="Link to this definition">¶</a></dt>
+<dd><p>Get a dictionary of model parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing model parameters and configuration</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id19">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id19" title="Link to this definition">¶</a></dt>
+<dd><p>Make predictions using the trained model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors to predict on</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store predictions in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with predictions added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id20">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prediction_conf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.prediction_conf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id20" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate prediction confidence scores.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing true labels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with confidence scores added</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id21">
+<span class="sig-name descname"><span class="pre">prep_fvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fvs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'features'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.prep_fvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id21" title="Link to this definition">¶</a></dt>
+<dd><p>Prepare feature vectors for model input.</p>
+<p>This method handles NaN filling and conversion between vector and array formats
+based on the model’s requirements.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fvs</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – DataFrame containing feature vectors</p></li>
+<li><p><strong>feature_col</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the column containing feature vectors</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with prepared feature vectors</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id22">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#MLModel.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id22" title="Link to this definition">¶</a></dt>
+<dd><p>Train the model on the given data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing training data</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing labels</p></li>
+<li><p><strong>return_estimator</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the trained estimator instead of self</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The trained model (self) or the trained estimator if return_estimator is True</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#id3" title="ml_model.MLModel">MLModel</a> or BaseEstimator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id23">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_floats</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#id23" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model uses float32 or float64 precision.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model uses float32, False if it uses float64</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id24">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_vectors</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#id24" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model expects feature vectors in vector format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model expects vectors, False if it expects arrays</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="sklearnmodel">
+<h2>SKLearnModel<a class="headerlink" href="#sklearnmodel" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="id25">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ml_model.</span></span><span class="sig-name descname"><span class="pre">SKLearnModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nan_fill</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_floats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'local'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id25" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#id3" title="ml_model.MLModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">MLModel</span></code></a></p>
+<p>Scikit-learn model wrapper.</p>
+<p>This class wraps scikit-learn models to provide a consistent interface
+with PySpark ML models. It handles conversion between pandas and PySpark
+DataFrames, and manages model training and prediction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>sklearn.base.BaseEstimator</em><em> or </em><em>type</em>) – The scikit-learn model class or instance to use</p></li>
+<li><p><strong>nan_fill</strong> (<em>float</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Value to use for filling NaN values</p></li>
+<li><p><strong>use_floats</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use float32 (True) or float64 (False) precision</p></li>
+<li><p><strong>execution</strong> (<em>str</em><em>, </em><em>optional</em>) – Execution mode: “local” for pandas or “spark” for PySpark</p></li>
+<li><p><strong>**model_args</strong> (<em>dict</em>) – Additional arguments to pass to the model constructor</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="id26">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id26" title="Link to this definition">¶</a></dt>
+<dd><p>Make predictions using the trained model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors to predict on</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store predictions in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with predictions added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id27">
+<span class="sig-name descname"><span class="pre">prediction_conf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.prediction_conf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id27" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate prediction confidence scores.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing true labels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with confidence scores added</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id28">
+<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id28" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate entropy of predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store entropy values in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with entropy values added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id29">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id29" title="Link to this definition">¶</a></dt>
+<dd><p>Train the model on the given data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing training data</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing labels</p></li>
+<li><p><strong>return_estimator</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the trained estimator instead of self</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The trained model (self) or the trained estimator if return_estimator is True</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#id3" title="ml_model.MLModel">MLModel</a> or BaseEstimator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id30">
+<span class="sig-name descname"><span class="pre">cross_val_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.cross_val_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id30" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id31">
+<span class="sig-name descname"><span class="pre">cross_val_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.cross_val_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id31" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id32">
+<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id32" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate entropy of predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store entropy values in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with entropy values added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id33">
+<span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id33" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id34">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nan_fill</span></span><a class="headerlink" href="#id34" title="Link to this definition">¶</a></dt>
+<dd><p>Value to use for filling NaN values in feature vectors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The value to use for filling NaN values, or None if no filling is needed</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id35">
+<span class="sig-name descname"><span class="pre">params_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.params_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id35" title="Link to this definition">¶</a></dt>
+<dd><p>Get a dictionary of model parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing model parameters and configuration</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id36">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id36" title="Link to this definition">¶</a></dt>
+<dd><p>Make predictions using the trained model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors to predict on</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store predictions in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with predictions added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id37">
+<span class="sig-name descname"><span class="pre">prediction_conf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.prediction_conf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id37" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate prediction confidence scores.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing true labels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with confidence scores added</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id38">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SKLearnModel.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id38" title="Link to this definition">¶</a></dt>
+<dd><p>Train the model on the given data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing training data</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing labels</p></li>
+<li><p><strong>return_estimator</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the trained estimator instead of self</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The trained model (self) or the trained estimator if return_estimator is True</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#id3" title="ml_model.MLModel">MLModel</a> or BaseEstimator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id39">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">trained_model</span></span><a class="headerlink" href="#id39" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id40">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_floats</span></span><a class="headerlink" href="#id40" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model uses float32 or float64 precision.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model uses float32, False if it uses float64</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id41">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_vectors</span></span><a class="headerlink" href="#id41" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model expects feature vectors in vector format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model expects vectors, False if it expects arrays</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="sparkmlmodel">
+<h2>SparkMLModel<a class="headerlink" href="#sparkmlmodel" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="id42">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ml_model.</span></span><span class="sig-name descname"><span class="pre">SparkMLModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nan_fill</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id42" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#id3" title="ml_model.MLModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">MLModel</span></code></a></p>
+<p class="rubric">Methods</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="id43">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id43" title="Link to this definition">¶</a></dt>
+<dd><p>Make predictions using the trained model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors to predict on</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store predictions in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with predictions added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id44">
+<span class="sig-name descname"><span class="pre">prediction_conf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.prediction_conf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id44" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate prediction confidence scores.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing true labels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with confidence scores added</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id45">
+<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id45" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate entropy of predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store entropy values in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with entropy values added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id46">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id46" title="Link to this definition">¶</a></dt>
+<dd><p>Train the model on the given data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing training data</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing labels</p></li>
+<li><p><strong>return_estimator</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the trained estimator instead of self</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The trained model (self) or the trained estimator if return_estimator is True</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#id3" title="ml_model.MLModel">MLModel</a> or BaseEstimator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id47">
+<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id47" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate entropy of predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store entropy values in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with entropy values added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id48">
+<span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id48" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id49">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nan_fill</span></span><a class="headerlink" href="#id49" title="Link to this definition">¶</a></dt>
+<dd><p>Value to use for filling NaN values in feature vectors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The value to use for filling NaN values, or None if no filling is needed</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id50">
+<span class="sig-name descname"><span class="pre">params_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.params_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id50" title="Link to this definition">¶</a></dt>
+<dd><p>Get a dictionary of model parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing model parameters and configuration</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id51">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id51" title="Link to this definition">¶</a></dt>
+<dd><p>Make predictions using the trained model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors to predict on</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – Name of the column to store predictions in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with predictions added in the output_col</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id52">
+<span class="sig-name descname"><span class="pre">prediction_conf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.prediction_conf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id52" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate prediction confidence scores.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing the feature vectors</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing true labels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The input DataFrame with confidence scores added</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame or pyspark.sql.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id53">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#SparkMLModel.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id53" title="Link to this definition">¶</a></dt>
+<dd><p>Train the model on the given data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em> or </em><em>pyspark.sql.DataFrame</em>) – The DataFrame containing training data</p></li>
+<li><p><strong>vector_col</strong> (<em>str</em>) – Name of the column containing feature vectors</p></li>
+<li><p><strong>label_column</strong> (<em>str</em>) – Name of the column containing labels</p></li>
+<li><p><strong>return_estimator</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the trained estimator instead of self</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The trained model (self) or the trained estimator if return_estimator is True</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#id3" title="ml_model.MLModel">MLModel</a> or BaseEstimator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id54">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_floats</span></span><a class="headerlink" href="#id54" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model uses float32 or float64 precision.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model uses float32, False if it uses float64</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="id55">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">use_vectors</span></span><a class="headerlink" href="#id55" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the model expects feature vectors in vector format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the model expects vectors, False if it expects arrays</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="utility-functions">
+<h2>Utility Functions<a class="headerlink" href="#utility-functions" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="id56">
+<span class="sig-prename descclassname"><span class="pre">ml_model.</span></span><span class="sig-name descname"><span class="pre">convert_to_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#convert_to_vector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id56" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="id57">
+<span class="sig-prename descclassname"><span class="pre">ml_model.</span></span><span class="sig-name descname"><span class="pre">convert_to_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ml_model.html#convert_to_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id57" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,338 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>storage module &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">storage module</a><ul>
+<li><a class="reference internal" href="#storage.DistributableHashMap"><code class="docutils literal notranslate"><span class="pre">DistributableHashMap</span></code></a><ul>
+<li><a class="reference internal" href="#storage.DistributableHashMap.init"><code class="docutils literal notranslate"><span class="pre">DistributableHashMap.init()</span></code></a></li>
+<li><a class="reference internal" href="#storage.DistributableHashMap.on_spark"><code class="docutils literal notranslate"><span class="pre">DistributableHashMap.on_spark</span></code></a></li>
+<li><a class="reference internal" href="#storage.DistributableHashMap.to_spark"><code class="docutils literal notranslate"><span class="pre">DistributableHashMap.to_spark()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#storage.LongIntHashMap"><code class="docutils literal notranslate"><span class="pre">LongIntHashMap</span></code></a><ul>
+<li><a class="reference internal" href="#storage.LongIntHashMap.build"><code class="docutils literal notranslate"><span class="pre">LongIntHashMap.build()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#storage.MemmapArray"><code class="docutils literal notranslate"><span class="pre">MemmapArray</span></code></a><ul>
+<li><a class="reference internal" href="#storage.MemmapArray.delete"><code class="docutils literal notranslate"><span class="pre">MemmapArray.delete()</span></code></a></li>
+<li><a class="reference internal" href="#storage.MemmapArray.init"><code class="docutils literal notranslate"><span class="pre">MemmapArray.init()</span></code></a></li>
+<li><a class="reference internal" href="#storage.MemmapArray.shape"><code class="docutils literal notranslate"><span class="pre">MemmapArray.shape</span></code></a></li>
+<li><a class="reference internal" href="#storage.MemmapArray.to_spark"><code class="docutils literal notranslate"><span class="pre">MemmapArray.to_spark()</span></code></a></li>
+<li><a class="reference internal" href="#storage.MemmapArray.values"><code class="docutils literal notranslate"><span class="pre">MemmapArray.values</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#storage.MemmapDataFrame"><code class="docutils literal notranslate"><span class="pre">MemmapDataFrame</span></code></a><ul>
+<li><a class="reference internal" href="#storage.MemmapDataFrame.compress"><code class="docutils literal notranslate"><span class="pre">MemmapDataFrame.compress()</span></code></a></li>
+<li><a class="reference internal" href="#storage.MemmapDataFrame.decompress"><code class="docutils literal notranslate"><span class="pre">MemmapDataFrame.decompress()</span></code></a></li>
+<li><a class="reference internal" href="#storage.MemmapDataFrame.delete"><code class="docutils literal notranslate"><span class="pre">MemmapDataFrame.delete()</span></code></a></li>
+<li><a class="reference internal" href="#storage.MemmapDataFrame.fetch"><code class="docutils literal notranslate"><span class="pre">MemmapDataFrame.fetch()</span></code></a></li>
+<li><a class="reference internal" href="#storage.MemmapDataFrame.from_spark_df"><code class="docutils literal notranslate"><span class="pre">MemmapDataFrame.from_spark_df()</span></code></a></li>
+<li><a class="reference internal" href="#storage.MemmapDataFrame.init"><code class="docutils literal notranslate"><span class="pre">MemmapDataFrame.init()</span></code></a></li>
+<li><a class="reference internal" href="#storage.MemmapDataFrame.to_spark"><code class="docutils literal notranslate"><span class="pre">MemmapDataFrame.to_spark()</span></code></a></li>
+<li><a class="reference internal" href="#storage.MemmapDataFrame.write_chunk"><code class="docutils literal notranslate"><span class="pre">MemmapDataFrame.write_chunk()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#storage.SqliteDataFrame"><code class="docutils literal notranslate"><span class="pre">SqliteDataFrame</span></code></a><ul>
+<li><a class="reference internal" href="#storage.SqliteDataFrame.fetch"><code class="docutils literal notranslate"><span class="pre">SqliteDataFrame.fetch()</span></code></a></li>
+<li><a class="reference internal" href="#storage.SqliteDataFrame.from_spark_df"><code class="docutils literal notranslate"><span class="pre">SqliteDataFrame.from_spark_df()</span></code></a></li>
+<li><a class="reference internal" href="#storage.SqliteDataFrame.init"><code class="docutils literal notranslate"><span class="pre">SqliteDataFrame.init()</span></code></a></li>
+<li><a class="reference internal" href="#storage.SqliteDataFrame.to_spark"><code class="docutils literal notranslate"><span class="pre">SqliteDataFrame.to_spark()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#storage.SqliteDict"><code class="docutils literal notranslate"><span class="pre">SqliteDict</span></code></a><ul>
+<li><a class="reference internal" href="#storage.SqliteDict.deinit"><code class="docutils literal notranslate"><span class="pre">SqliteDict.deinit()</span></code></a></li>
+<li><a class="reference internal" href="#storage.SqliteDict.from_dict"><code class="docutils literal notranslate"><span class="pre">SqliteDict.from_dict()</span></code></a></li>
+<li><a class="reference internal" href="#storage.SqliteDict.init"><code class="docutils literal notranslate"><span class="pre">SqliteDict.init()</span></code></a></li>
+<li><a class="reference internal" href="#storage.SqliteDict.to_spark"><code class="docutils literal notranslate"><span class="pre">SqliteDict.to_spark()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#storage.hash_map_get_key"><code class="docutils literal notranslate"><span class="pre">hash_map_get_key()</span></code></a></li>
+<li><a class="reference internal" href="#storage.hash_map_get_keys"><code class="docutils literal notranslate"><span class="pre">hash_map_get_keys()</span></code></a></li>
+<li><a class="reference internal" href="#storage.hash_map_insert_key"><code class="docutils literal notranslate"><span class="pre">hash_map_insert_key()</span></code></a></li>
+<li><a class="reference internal" href="#storage.hash_map_insert_keys"><code class="docutils literal notranslate"><span class="pre">hash_map_insert_keys()</span></code></a></li>
+<li><a class="reference internal" href="#storage.spark_to_pandas_stream"><code class="docutils literal notranslate"><span class="pre">spark_to_pandas_stream()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">storage module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/source/modules/storage.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-storage">
+<span id="storage-module"></span><h1>storage module<a class="headerlink" href="#module-storage" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="storage.DistributableHashMap">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">storage.</span></span><span class="sig-name descname"><span class="pre">DistributableHashMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#DistributableHashMap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.DistributableHashMap" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.DistributableHashMap.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#DistributableHashMap.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.DistributableHashMap.init" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="storage.DistributableHashMap.on_spark">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">on_spark</span></span><a class="headerlink" href="#storage.DistributableHashMap.on_spark" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.DistributableHashMap.to_spark">
+<span class="sig-name descname"><span class="pre">to_spark</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#DistributableHashMap.to_spark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.DistributableHashMap.to_spark" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="storage.LongIntHashMap">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">storage.</span></span><span class="sig-name descname"><span class="pre">LongIntHashMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#LongIntHashMap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.LongIntHashMap" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#storage.DistributableHashMap" title="storage.DistributableHashMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">DistributableHashMap</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.LongIntHashMap.build">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">longs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.75</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#LongIntHashMap.build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.LongIntHashMap.build" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="storage.MemmapArray">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">storage.</span></span><span class="sig-name descname"><span class="pre">MemmapArray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#MemmapArray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.MemmapArray" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.MemmapArray.delete">
+<span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#MemmapArray.delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.MemmapArray.delete" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.MemmapArray.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#MemmapArray.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.MemmapArray.init" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="storage.MemmapArray.shape">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><a class="headerlink" href="#storage.MemmapArray.shape" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.MemmapArray.to_spark">
+<span class="sig-name descname"><span class="pre">to_spark</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#MemmapArray.to_spark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.MemmapArray.to_spark" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="storage.MemmapArray.values">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">values</span></span><a class="headerlink" href="#storage.MemmapArray.values" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="storage.MemmapDataFrame">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">storage.</span></span><span class="sig-name descname"><span class="pre">MemmapDataFrame</span></span><a class="reference internal" href="../../_modules/storage.html#MemmapDataFrame"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.MemmapDataFrame" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.MemmapDataFrame.compress">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">o</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#MemmapDataFrame.compress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.MemmapDataFrame.compress" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.MemmapDataFrame.decompress">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">decompress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">o</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#MemmapDataFrame.decompress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.MemmapDataFrame.decompress" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.MemmapDataFrame.delete">
+<span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#MemmapDataFrame.delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.MemmapDataFrame.delete" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.MemmapDataFrame.fetch">
+<span class="sig-name descname"><span class="pre">fetch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#MemmapDataFrame.fetch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.MemmapDataFrame.fetch" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.MemmapDataFrame.from_spark_df">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_spark_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spark_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stored_columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_id'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#MemmapDataFrame.from_spark_df"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.MemmapDataFrame.from_spark_df" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.MemmapDataFrame.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#MemmapDataFrame.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.MemmapDataFrame.init" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.MemmapDataFrame.to_spark">
+<span class="sig-name descname"><span class="pre">to_spark</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#MemmapDataFrame.to_spark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.MemmapDataFrame.to_spark" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.MemmapDataFrame.write_chunk">
+<span class="sig-name descname"><span class="pre">write_chunk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pic</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#MemmapDataFrame.write_chunk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.MemmapDataFrame.write_chunk" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="storage.SqliteDataFrame">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">storage.</span></span><span class="sig-name descname"><span class="pre">SqliteDataFrame</span></span><a class="reference internal" href="../../_modules/storage.html#SqliteDataFrame"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.SqliteDataFrame" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.SqliteDataFrame.fetch">
+<span class="sig-name descname"><span class="pre">fetch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#SqliteDataFrame.fetch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.SqliteDataFrame.fetch" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.SqliteDataFrame.from_spark_df">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_spark_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spark_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stored_columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_id'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#SqliteDataFrame.from_spark_df"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.SqliteDataFrame.from_spark_df" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.SqliteDataFrame.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#SqliteDataFrame.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.SqliteDataFrame.init" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.SqliteDataFrame.to_spark">
+<span class="sig-name descname"><span class="pre">to_spark</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#SqliteDataFrame.to_spark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.SqliteDataFrame.to_spark" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="storage.SqliteDict">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">storage.</span></span><span class="sig-name descname"><span class="pre">SqliteDict</span></span><a class="reference internal" href="../../_modules/storage.html#SqliteDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.SqliteDict" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.SqliteDict.deinit">
+<span class="sig-name descname"><span class="pre">deinit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#SqliteDict.deinit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.SqliteDict.deinit" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.SqliteDict.from_dict">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#SqliteDict.from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.SqliteDict.from_dict" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.SqliteDict.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#SqliteDict.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.SqliteDict.init" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storage.SqliteDict.to_spark">
+<span class="sig-name descname"><span class="pre">to_spark</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#SqliteDict.to_spark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.SqliteDict.to_spark" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="storage.hash_map_get_key">
+<span class="sig-prename descclassname"><span class="pre">storage.</span></span><span class="sig-name descname"><span class="pre">hash_map_get_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#hash_map_get_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.hash_map_get_key" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="storage.hash_map_get_keys">
+<span class="sig-prename descclassname"><span class="pre">storage.</span></span><span class="sig-name descname"><span class="pre">hash_map_get_keys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#hash_map_get_keys"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.hash_map_get_keys" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="storage.hash_map_insert_key">
+<span class="sig-prename descclassname"><span class="pre">storage.</span></span><span class="sig-name descname"><span class="pre">hash_map_insert_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#hash_map_insert_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.hash_map_insert_key" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="storage.hash_map_insert_keys">
+<span class="sig-prename descclassname"><span class="pre">storage.</span></span><span class="sig-name descname"><span class="pre">hash_map_insert_keys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vals</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#hash_map_insert_keys"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.hash_map_insert_keys" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="storage.spark_to_pandas_stream">
+<span class="sig-prename descclassname"><span class="pre">storage.</span></span><span class="sig-name descname"><span class="pre">spark_to_pandas_stream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/storage.html#spark_to_pandas_stream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#storage.spark_to_pandas_stream" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

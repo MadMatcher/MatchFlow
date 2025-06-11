@@ -1,0 +1,321 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tokenizer.tokenizer module &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">tokenizer.tokenizer module</a><ul>
+<li><a class="reference internal" href="#tokenizer.tokenizer.AlphaNumericTokenizer"><code class="docutils literal notranslate"><span class="pre">AlphaNumericTokenizer</span></code></a><ul>
+<li><a class="reference internal" href="#tokenizer.tokenizer.AlphaNumericTokenizer.NAME"><code class="docutils literal notranslate"><span class="pre">AlphaNumericTokenizer.NAME</span></code></a></li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.AlphaNumericTokenizer.tokenize"><code class="docutils literal notranslate"><span class="pre">AlphaNumericTokenizer.tokenize()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.NumericTokenizer"><code class="docutils literal notranslate"><span class="pre">NumericTokenizer</span></code></a><ul>
+<li><a class="reference internal" href="#tokenizer.tokenizer.NumericTokenizer.NAME"><code class="docutils literal notranslate"><span class="pre">NumericTokenizer.NAME</span></code></a></li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.NumericTokenizer.tokenize"><code class="docutils literal notranslate"><span class="pre">NumericTokenizer.tokenize()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.QGramTokenizer"><code class="docutils literal notranslate"><span class="pre">QGramTokenizer</span></code></a><ul>
+<li><a class="reference internal" href="#tokenizer.tokenizer.QGramTokenizer.tokenize"><code class="docutils literal notranslate"><span class="pre">QGramTokenizer.tokenize()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.ShingleTokenizer"><code class="docutils literal notranslate"><span class="pre">ShingleTokenizer</span></code></a><ul>
+<li><a class="reference internal" href="#tokenizer.tokenizer.ShingleTokenizer.base_tokenize"><code class="docutils literal notranslate"><span class="pre">ShingleTokenizer.base_tokenize()</span></code></a></li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.ShingleTokenizer.tokenize"><code class="docutils literal notranslate"><span class="pre">ShingleTokenizer.tokenize()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.StrippedQGramTokenizer"><code class="docutils literal notranslate"><span class="pre">StrippedQGramTokenizer</span></code></a><ul>
+<li><a class="reference internal" href="#tokenizer.tokenizer.StrippedQGramTokenizer.RE"><code class="docutils literal notranslate"><span class="pre">StrippedQGramTokenizer.RE</span></code></a></li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.StrippedQGramTokenizer.tokenize"><code class="docutils literal notranslate"><span class="pre">StrippedQGramTokenizer.tokenize()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.StrippedWhiteSpaceTokenizer"><code class="docutils literal notranslate"><span class="pre">StrippedWhiteSpaceTokenizer</span></code></a><ul>
+<li><a class="reference internal" href="#tokenizer.tokenizer.StrippedWhiteSpaceTokenizer.NAME"><code class="docutils literal notranslate"><span class="pre">StrippedWhiteSpaceTokenizer.NAME</span></code></a></li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.StrippedWhiteSpaceTokenizer.RE"><code class="docutils literal notranslate"><span class="pre">StrippedWhiteSpaceTokenizer.RE</span></code></a></li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.StrippedWhiteSpaceTokenizer.WHITESPACE_NORM"><code class="docutils literal notranslate"><span class="pre">StrippedWhiteSpaceTokenizer.WHITESPACE_NORM</span></code></a></li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.StrippedWhiteSpaceTokenizer.tokenize"><code class="docutils literal notranslate"><span class="pre">StrippedWhiteSpaceTokenizer.tokenize()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.Tokenizer"><code class="docutils literal notranslate"><span class="pre">Tokenizer</span></code></a><ul>
+<li><a class="reference internal" href="#tokenizer.tokenizer.Tokenizer.out_col_name"><code class="docutils literal notranslate"><span class="pre">Tokenizer.out_col_name()</span></code></a></li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.Tokenizer.tokenize"><code class="docutils literal notranslate"><span class="pre">Tokenizer.tokenize()</span></code></a></li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.Tokenizer.tokenize_set"><code class="docutils literal notranslate"><span class="pre">Tokenizer.tokenize_set()</span></code></a></li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.Tokenizer.tokenize_spark"><code class="docutils literal notranslate"><span class="pre">Tokenizer.tokenize_spark()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.WhiteSpaceTokenizer"><code class="docutils literal notranslate"><span class="pre">WhiteSpaceTokenizer</span></code></a><ul>
+<li><a class="reference internal" href="#tokenizer.tokenizer.WhiteSpaceTokenizer.NAME"><code class="docutils literal notranslate"><span class="pre">WhiteSpaceTokenizer.NAME</span></code></a></li>
+<li><a class="reference internal" href="#tokenizer.tokenizer.WhiteSpaceTokenizer.tokenize"><code class="docutils literal notranslate"><span class="pre">WhiteSpaceTokenizer.tokenize()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">tokenizer.tokenizer module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/source/modules/tokenizer.tokenizer.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-tokenizer.tokenizer">
+<span id="tokenizer-tokenizer-module"></span><h1>tokenizer.tokenizer module<a class="headerlink" href="#module-tokenizer.tokenizer" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.AlphaNumericTokenizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tokenizer.tokenizer.</span></span><span class="sig-name descname"><span class="pre">AlphaNumericTokenizer</span></span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#AlphaNumericTokenizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.AlphaNumericTokenizer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tokenizer.tokenizer.Tokenizer" title="tokenizer.tokenizer.Tokenizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tokenizer</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.AlphaNumericTokenizer.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'alnum_tokens'</span></em><a class="headerlink" href="#tokenizer.tokenizer.AlphaNumericTokenizer.NAME" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.AlphaNumericTokenizer.tokenize">
+<span class="sig-name descname"><span class="pre">tokenize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#AlphaNumericTokenizer.tokenize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.AlphaNumericTokenizer.tokenize" title="Link to this definition">¶</a></dt>
+<dd><p>convert the string into a BAG of tokens (tokens should not be deduped)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.NumericTokenizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tokenizer.tokenizer.</span></span><span class="sig-name descname"><span class="pre">NumericTokenizer</span></span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#NumericTokenizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.NumericTokenizer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tokenizer.tokenizer.Tokenizer" title="tokenizer.tokenizer.Tokenizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tokenizer</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.NumericTokenizer.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'num_tokens'</span></em><a class="headerlink" href="#tokenizer.tokenizer.NumericTokenizer.NAME" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.NumericTokenizer.tokenize">
+<span class="sig-name descname"><span class="pre">tokenize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#NumericTokenizer.tokenize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.NumericTokenizer.tokenize" title="Link to this definition">¶</a></dt>
+<dd><p>convert the string into a BAG of tokens (tokens should not be deduped)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.QGramTokenizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tokenizer.tokenizer.</span></span><span class="sig-name descname"><span class="pre">QGramTokenizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#QGramTokenizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.QGramTokenizer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tokenizer.tokenizer.Tokenizer" title="tokenizer.tokenizer.Tokenizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tokenizer</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.QGramTokenizer.tokenize">
+<span class="sig-name descname"><span class="pre">tokenize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#QGramTokenizer.tokenize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.QGramTokenizer.tokenize" title="Link to this definition">¶</a></dt>
+<dd><p>convert the string into a BAG of tokens (tokens should not be deduped)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.ShingleTokenizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tokenizer.tokenizer.</span></span><span class="sig-name descname"><span class="pre">ShingleTokenizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#ShingleTokenizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.ShingleTokenizer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tokenizer.tokenizer.Tokenizer" title="tokenizer.tokenizer.Tokenizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tokenizer</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.ShingleTokenizer.base_tokenize">
+<span class="sig-name descname"><span class="pre">base_tokenize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tokenizer.tokenizer.ShingleTokenizer.base_tokenize" title="Link to this definition">¶</a></dt>
+<dd><p>convert the string into a BAG of tokens (tokens should not be deduped)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.ShingleTokenizer.tokenize">
+<span class="sig-name descname"><span class="pre">tokenize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#ShingleTokenizer.tokenize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.ShingleTokenizer.tokenize" title="Link to this definition">¶</a></dt>
+<dd><p>convert the string into a BAG of tokens (tokens should not be deduped)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.StrippedQGramTokenizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tokenizer.tokenizer.</span></span><span class="sig-name descname"><span class="pre">StrippedQGramTokenizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#StrippedQGramTokenizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.StrippedQGramTokenizer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tokenizer.tokenizer.Tokenizer" title="tokenizer.tokenizer.Tokenizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tokenizer</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.StrippedQGramTokenizer.RE">
+<span class="sig-name descname"><span class="pre">RE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('\\W+')</span></em><a class="headerlink" href="#tokenizer.tokenizer.StrippedQGramTokenizer.RE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.StrippedQGramTokenizer.tokenize">
+<span class="sig-name descname"><span class="pre">tokenize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#StrippedQGramTokenizer.tokenize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.StrippedQGramTokenizer.tokenize" title="Link to this definition">¶</a></dt>
+<dd><p>convert the string into a BAG of tokens (tokens should not be deduped)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.StrippedWhiteSpaceTokenizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tokenizer.tokenizer.</span></span><span class="sig-name descname"><span class="pre">StrippedWhiteSpaceTokenizer</span></span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#StrippedWhiteSpaceTokenizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.StrippedWhiteSpaceTokenizer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tokenizer.tokenizer.Tokenizer" title="tokenizer.tokenizer.Tokenizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tokenizer</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.StrippedWhiteSpaceTokenizer.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'stripped_whitespace_tokens'</span></em><a class="headerlink" href="#tokenizer.tokenizer.StrippedWhiteSpaceTokenizer.NAME" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.StrippedWhiteSpaceTokenizer.RE">
+<span class="sig-name descname"><span class="pre">RE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('[^a-z0-9</span> <span class="pre">]+')</span></em><a class="headerlink" href="#tokenizer.tokenizer.StrippedWhiteSpaceTokenizer.RE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.StrippedWhiteSpaceTokenizer.WHITESPACE_NORM">
+<span class="sig-name descname"><span class="pre">WHITESPACE_NORM</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('[\\s]+')</span></em><a class="headerlink" href="#tokenizer.tokenizer.StrippedWhiteSpaceTokenizer.WHITESPACE_NORM" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.StrippedWhiteSpaceTokenizer.tokenize">
+<span class="sig-name descname"><span class="pre">tokenize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#StrippedWhiteSpaceTokenizer.tokenize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.StrippedWhiteSpaceTokenizer.tokenize" title="Link to this definition">¶</a></dt>
+<dd><p>convert the string into a BAG of tokens (tokens should not be deduped)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.Tokenizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tokenizer.tokenizer.</span></span><span class="sig-name descname"><span class="pre">Tokenizer</span></span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#Tokenizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.Tokenizer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.Tokenizer.out_col_name">
+<span class="sig-name descname"><span class="pre">out_col_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#Tokenizer.out_col_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.Tokenizer.out_col_name" title="Link to this definition">¶</a></dt>
+<dd><p>the name of the output column from the tokenizer
+e.g. for a 3gram tokenizer, the tokens from the name columns could
+be “3gram(name)”</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.Tokenizer.tokenize">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tokenize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#Tokenizer.tokenize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.Tokenizer.tokenize" title="Link to this definition">¶</a></dt>
+<dd><p>convert the string into a BAG of tokens (tokens should not be deduped)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.Tokenizer.tokenize_set">
+<span class="sig-name descname"><span class="pre">tokenize_set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#Tokenizer.tokenize_set"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.Tokenizer.tokenize_set" title="Link to this definition">¶</a></dt>
+<dd><p>tokenize the string and return a set or None if the tokenize returns None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.Tokenizer.tokenize_spark">
+<span class="sig-name descname"><span class="pre">tokenize_spark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#Tokenizer.tokenize_spark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.Tokenizer.tokenize_spark" title="Link to this definition">¶</a></dt>
+<dd><p>return a column expression that gives the same output
+as the tokenize method. required for effeciency when building metadata for
+certain methods</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.WhiteSpaceTokenizer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tokenizer.tokenizer.</span></span><span class="sig-name descname"><span class="pre">WhiteSpaceTokenizer</span></span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#WhiteSpaceTokenizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.WhiteSpaceTokenizer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tokenizer.tokenizer.Tokenizer" title="tokenizer.tokenizer.Tokenizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tokenizer</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.WhiteSpaceTokenizer.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'whitespace_tokens'</span></em><a class="headerlink" href="#tokenizer.tokenizer.WhiteSpaceTokenizer.NAME" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tokenizer.tokenizer.WhiteSpaceTokenizer.tokenize">
+<span class="sig-name descname"><span class="pre">tokenize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tokenizer/tokenizer.html#WhiteSpaceTokenizer.tokenize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tokenizer.tokenizer.WhiteSpaceTokenizer.tokenize" title="Link to this definition">¶</a></dt>
+<dd><p>convert the string into a BAG of tokens (tokens should not be deduped)</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

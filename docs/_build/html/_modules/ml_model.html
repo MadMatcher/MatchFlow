@@ -1,0 +1,657 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ml_model &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ml_model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ml_model</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Machine Learning Model base classes and implementations.</span>
+
+<span class="sd">This module provides base classes and implementations for machine learning models,</span>
+<span class="sd">supporting both scikit-learn and PySpark ML models. It includes functionality for</span>
+<span class="sd">training, prediction, confidence estimation, and entropy calculation.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractproperty</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyspark.sql.functions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyspark.sql.types</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">T</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.ml.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">vector_to_array</span><span class="p">,</span> <span class="n">array_to_vector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.ml.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorUDT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataFrame</span> <span class="k">as</span> <span class="n">SparkDataFrame</span><span class="p">,</span> <span class="n">SparkSession</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">cross_val_score</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistGradientBoostingClassifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEstimator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">joblib</span><span class="w"> </span><span class="kn">import</span> <span class="n">parallel_backend</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">threadpoolctl</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadpoolController</span>
+
+<div class="viewcode-block" id="MLModel">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.MLModel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MLModel</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for machine learning models.</span>
+<span class="sd">    </span>
+<span class="sd">    This class defines the interface that all machine learning models must implement,</span>
+<span class="sd">    whether they are scikit-learn models or PySpark ML models. It provides methods</span>
+<span class="sd">    for training, prediction, confidence estimation, and entropy calculation.</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    nan_fill : float or None</span>
+<span class="sd">        Value to use for filling NaN values in feature vectors</span>
+<span class="sd">    use_vectors : bool</span>
+<span class="sd">        Whether the model expects feature vectors in vector format</span>
+<span class="sd">    use_floats : bool</span>
+<span class="sd">        Whether the model uses float32 (True) or float64 (False) precision</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="nd">@abstractproperty</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nan_fill</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Value to use for filling NaN values in feature vectors.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float or None</span>
+<span class="sd">            The value to use for filling NaN values, or None if no filling is needed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractproperty</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">use_vectors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether the model expects feature vectors in vector format.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if the model expects vectors, False if it expects arrays</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractproperty</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">use_floats</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether the model uses float32 or float64 precision.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if the model uses float32, False if it uses float64</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="MLModel.predict">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.MLModel.predict">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">SparkDataFrame</span><span class="p">],</span> <span class="n">vector_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">SparkDataFrame</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make predictions using the trained model.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pandas.DataFrame or pyspark.sql.DataFrame</span>
+<span class="sd">            The DataFrame containing the feature vectors to predict on</span>
+<span class="sd">        vector_col : str</span>
+<span class="sd">            Name of the column containing feature vectors</span>
+<span class="sd">        output_col : str</span>
+<span class="sd">            Name of the column to store predictions in</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pandas.DataFrame or pyspark.sql.DataFrame</span>
+<span class="sd">            The input DataFrame with predictions added in the output_col</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="MLModel.prediction_conf">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.MLModel.prediction_conf">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prediction_conf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">SparkDataFrame</span><span class="p">],</span> <span class="n">vector_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">label_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">SparkDataFrame</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate prediction confidence scores.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pandas.DataFrame or pyspark.sql.DataFrame</span>
+<span class="sd">            The DataFrame containing the feature vectors</span>
+<span class="sd">        vector_col : str</span>
+<span class="sd">            Name of the column containing feature vectors</span>
+<span class="sd">        label_column : str</span>
+<span class="sd">            Name of the column containing true labels</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pandas.DataFrame or pyspark.sql.DataFrame</span>
+<span class="sd">            The input DataFrame with confidence scores added</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="MLModel.entropy">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.MLModel.entropy">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">SparkDataFrame</span><span class="p">],</span> <span class="n">vector_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">SparkDataFrame</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate entropy of predictions.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pandas.DataFrame or pyspark.sql.DataFrame</span>
+<span class="sd">            The DataFrame containing the feature vectors</span>
+<span class="sd">        vector_col : str</span>
+<span class="sd">            Name of the column containing feature vectors</span>
+<span class="sd">        output_col : str</span>
+<span class="sd">            Name of the column to store entropy values in</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pandas.DataFrame or pyspark.sql.DataFrame</span>
+<span class="sd">            The input DataFrame with entropy values added in the output_col</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="MLModel.train">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.MLModel.train">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">SparkDataFrame</span><span class="p">],</span> <span class="n">vector_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">label_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">return_estimator</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="s1">&#39;MLModel&#39;</span><span class="p">,</span> <span class="n">BaseEstimator</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Train the model on the given data.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pandas.DataFrame or pyspark.sql.DataFrame</span>
+<span class="sd">            The DataFrame containing training data</span>
+<span class="sd">        vector_col : str</span>
+<span class="sd">            Name of the column containing feature vectors</span>
+<span class="sd">        label_column : str</span>
+<span class="sd">            Name of the column containing labels</span>
+<span class="sd">        return_estimator : bool, optional</span>
+<span class="sd">            If True, return the trained estimator instead of self</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        MLModel or BaseEstimator</span>
+<span class="sd">            The trained model (self) or the trained estimator if return_estimator is True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="MLModel.params_dict">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.MLModel.params_dict">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">params_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a dictionary of model parameters.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Dictionary containing model parameters and configuration</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="MLModel.prep_fvs">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.MLModel.prep_fvs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prep_fvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fvs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">SparkDataFrame</span><span class="p">],</span> <span class="n">feature_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;features&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">SparkDataFrame</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare feature vectors for model input.</span>
+<span class="sd">        </span>
+<span class="sd">        This method handles NaN filling and conversion between vector and array formats</span>
+<span class="sd">        based on the model&#39;s requirements.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fvs : pandas.DataFrame or pyspark.sql.DataFrame</span>
+<span class="sd">            DataFrame containing feature vectors</span>
+<span class="sd">        feature_col : str, optional</span>
+<span class="sd">            Name of the column containing feature vectors</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pandas.DataFrame or pyspark.sql.DataFrame</span>
+<span class="sd">            DataFrame with prepared feature vectors</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nan_fill</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fvs</span> <span class="o">=</span> <span class="n">fvs</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="n">feature_col</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">feature_col</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span> <span class="n">F</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">isNotNull</span><span class="p">()</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">F</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">otherwise</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">nan_fill</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_vectors</span><span class="p">:</span>
+            <span class="n">fvs</span> <span class="o">=</span> <span class="n">convert_to_vector</span><span class="p">(</span><span class="n">fvs</span><span class="p">,</span> <span class="n">feature_col</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fvs</span> <span class="o">=</span> <span class="n">convert_to_array</span><span class="p">(</span><span class="n">fvs</span><span class="p">,</span> <span class="n">feature_col</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_floats</span><span class="p">:</span>
+                <span class="n">fvs</span> <span class="o">=</span> <span class="n">fvs</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="n">feature_col</span><span class="p">,</span> <span class="n">fvs</span><span class="p">[</span><span class="n">feature_col</span><span class="p">]</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="s1">&#39;array&lt;float&gt;&#39;</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">fvs</span> <span class="o">=</span> <span class="n">fvs</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="n">feature_col</span><span class="p">,</span> <span class="n">fvs</span><span class="p">[</span><span class="n">feature_col</span><span class="p">]</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="s1">&#39;array&lt;double&gt;&#39;</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">fvs</span></div>
+</div>
+
+
+<div class="viewcode-block" id="convert_to_vector">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.convert_to_vector">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_to_vector</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">schema</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">dataType</span><span class="p">,</span> <span class="n">VectorUDT</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">array_to_vector</span><span class="p">(</span><span class="n">col</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+<span class="n">_DOUBLE_ARRAY</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">ArrayType</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">())</span>
+<span class="n">_FLOAT_ARRAY</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">ArrayType</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">FloatType</span><span class="p">())</span>
+<span class="n">_ARRAY_TYPES</span> <span class="o">=</span> <span class="p">{</span><span class="n">_DOUBLE_ARRAY</span><span class="p">,</span> <span class="n">_FLOAT_ARRAY</span><span class="p">}</span>
+
+<div class="viewcode-block" id="convert_to_array">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.convert_to_array">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_to_array</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">schema</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">dataType</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_ARRAY_TYPES</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">vector_to_array</span><span class="p">(</span><span class="n">col</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="SKLearnModel">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SKLearnModel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SKLearnModel</span><span class="p">(</span><span class="n">MLModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scikit-learn model wrapper.</span>
+<span class="sd">    </span>
+<span class="sd">    This class wraps scikit-learn models to provide a consistent interface</span>
+<span class="sd">    with PySpark ML models. It handles conversion between pandas and PySpark</span>
+<span class="sd">    DataFrames, and manages model training and prediction.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model : sklearn.base.BaseEstimator or type</span>
+<span class="sd">        The scikit-learn model class or instance to use</span>
+<span class="sd">    nan_fill : float or None, optional</span>
+<span class="sd">        Value to use for filling NaN values</span>
+<span class="sd">    use_floats : bool, optional</span>
+<span class="sd">        Whether to use float32 (True) or float64 (False) precision</span>
+<span class="sd">    execution : str, optional</span>
+<span class="sd">        Execution mode: &quot;local&quot; for pandas or &quot;spark&quot; for PySpark</span>
+<span class="sd">    **model_args : dict</span>
+<span class="sd">        Additional arguments to pass to the model constructor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">nan_fill</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_floats</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">execution</span><span class="o">=</span><span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">model_args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;predict&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span> <span class="o">=</span> <span class="n">model</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="vm">__class__</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_args</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_args</span> <span class="o">=</span> <span class="n">model_args</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nan_fill</span> <span class="o">=</span> <span class="n">nan_fill</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_use_floats</span> <span class="o">=</span> <span class="n">use_floats</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vector_buffer</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execution</span> <span class="o">=</span> <span class="n">execution</span>
+    
+
+<div class="viewcode-block" id="SKLearnModel.params_dict">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SKLearnModel.params_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">params_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+                <span class="s1">&#39;model&#39;</span> <span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">),</span>
+                <span class="s1">&#39;nan_fill&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nan_fill</span><span class="p">,</span>
+                <span class="s1">&#39;model_args&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_args</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="p">}</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_no_threads</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tpc</span> <span class="o">=</span> <span class="n">ThreadpoolController</span><span class="p">()</span>
+        <span class="n">tpc</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">limits</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">user_api</span><span class="o">=</span><span class="s1">&#39;openmp&#39;</span><span class="p">)</span>
+        <span class="n">tpc</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">limits</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">user_api</span><span class="o">=</span><span class="s1">&#39;blas&#39;</span><span class="p">)</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nan_fill</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nan_fill</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">use_vectors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">use_floats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_floats</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">trained_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span>
+
+<div class="viewcode-block" id="SKLearnModel.get_model">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SKLearnModel.get_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_args</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_allocate_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span><span class="p">):</span>
+        <span class="n">needed_size</span> <span class="o">=</span> <span class="n">nrows</span> <span class="o">*</span> <span class="n">ncols</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vector_buffer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vector_buffer</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="n">needed_size</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_vector_buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">needed_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_floats</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vector_buffer</span><span class="p">[:</span><span class="n">needed_size</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_make_feature_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vecs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vecs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allocate_buffer</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vecs</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">vecs</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">vecs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">buffer</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">X</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vec_itr</span> <span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_no_threads</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">vecs</span> <span class="ow">in</span> <span class="n">vec_itr</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_feature_matrix</span><span class="p">(</span><span class="n">vecs</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">estimator</span><span class="p">:</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="SKLearnModel.predict">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SKLearnModel.predict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="c1"># Overloaded method</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">BaseEstimator</span><span class="p">):</span>
+            <span class="n">est</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">,</span> <span class="n">out_col</span> <span class="o">=</span> <span class="n">args</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">est</span><span class="p">,</span> <span class="s1">&#39;predict&#39;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Estimator must have predict method.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">SKLearnModel</span><span class="p">(</span><span class="n">est</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">,</span> <span class="n">out_col</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;predict() expects (df, vector_col, output_col) or (estimator, df, vector_col, output_col)&quot;</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">,</span> <span class="n">output_col</span> <span class="o">=</span> <span class="n">args</span>  
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution</span> <span class="o">==</span> <span class="s2">&quot;local&quot;</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_feature_matrix</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">vector_col</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+            <span class="n">df</span><span class="p">[</span><span class="n">output_col</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">df</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">SparkDataFrame</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">execution</span> <span class="o">==</span> <span class="s2">&quot;spark&quot;</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">convert_to_array</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">)</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">pandas_udf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_predict</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">())</span>
+            <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="n">output_col</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">vector_col</span><span class="p">))</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prediction_conf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vec_itr</span> <span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_no_threads</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">vecs</span> <span class="ow">in</span> <span class="n">vec_itr</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_feature_matrix</span><span class="p">(</span><span class="n">vecs</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">probs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">probs</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+<div class="viewcode-block" id="SKLearnModel.prediction_conf">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SKLearnModel.prediction_conf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prediction_conf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_col</span> <span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Model must be trained to predict&#39;</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">convert_to_array</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">pandas_udf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prediction_conf</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="n">output_col</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">vector_col</span><span class="p">))</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vec_itr</span> <span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_no_threads</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">vecs</span> <span class="ow">in</span> <span class="n">vec_itr</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_feature_matrix</span><span class="p">(</span><span class="n">vecs</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">probs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">((</span><span class="o">-</span><span class="n">probs</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">probs</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)))</span>
+    
+<div class="viewcode-block" id="SKLearnModel.entropy">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SKLearnModel.entropy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_col</span> <span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Model must be trained to predict&#39;</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">convert_to_array</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">pandas_udf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_entropy</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="n">output_col</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">vector_col</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="SKLearnModel.train">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SKLearnModel.train">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">label_column</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">return_estimator</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">SparkDataFrame</span><span class="p">):</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">convert_to_array</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">)</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">toPandas</span><span class="p">()</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_feature_matrix</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">vector_col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">label_column</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span> <span class="k">if</span> <span class="n">return_estimator</span> <span class="k">else</span> <span class="bp">self</span></div>
+
+    
+<div class="viewcode-block" id="SKLearnModel.cross_val_scores">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SKLearnModel.cross_val_scores">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cross_val_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">label_column</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cv</span> <span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">convert_to_array</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">toPandas</span><span class="p">()</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_feature_matrix</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">vector_col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">label_column</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">cross_val_score</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model</span><span class="p">(),</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">cv</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">scores</span></div>
+</div>
+
+
+<div class="viewcode-block" id="SparkMLModel">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SparkMLModel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SparkMLModel</span><span class="p">(</span><span class="n">MLModel</span><span class="p">):</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">nan_fill</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">**</span><span class="n">model_args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;predict&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span> <span class="o">=</span> <span class="n">model</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="vm">__class__</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_args</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_args</span> <span class="o">=</span> <span class="n">model_args</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nan_fill</span> <span class="o">=</span> <span class="n">nan_fill</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nan_fill</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nan_fill</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">use_vectors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">use_floats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="SparkMLModel.get_model">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SparkMLModel.get_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_args</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SparkMLModel.params_dict">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SparkMLModel.params_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">params_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+                <span class="s1">&#39;model&#39;</span> <span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">),</span>
+                <span class="s1">&#39;model_args&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_args</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="SparkMLModel.prediction_conf">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SparkMLModel.prediction_conf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prediction_conf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_col</span> <span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Model must be trained to predict&#39;</span><span class="p">)</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">convert_to_vector</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">)</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">array_max</span><span class="p">(</span><span class="n">vector_to_array</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span><span class="o">.</span><span class="n">getProbabilityCol</span><span class="p">())))</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="n">output_col</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span><span class="o">.</span><span class="n">setFeaturesCol</span><span class="p">(</span><span class="n">vector_col</span><span class="p">)</span>\
+                                    <span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>\
+                                    <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">*</span><span class="n">cols</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span></div>
+
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">SparkDataFrame</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SparkDataFrame</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transformer</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">SparkDataFrame</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SparkDataFrame</span><span class="p">:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="SparkMLModel.predict">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SparkMLModel.predict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+            <span class="n">transformer</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">,</span> <span class="n">out_col</span> <span class="o">=</span> <span class="n">args</span>
+            <span class="k">return</span> <span class="n">SparkMLModel</span><span class="p">(</span><span class="n">transformer</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">,</span> <span class="n">out_col</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;predict() expects (df, vector_col, output_col) or (transformer, df, vector_col, output_col)&quot;</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">,</span> <span class="n">out_col</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Model must be trained to predict&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> 
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_model_args&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">SparkMLModel</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">,</span> <span class="n">out_col</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">convert_to_vector</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">)</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span><span class="o">.</span><span class="n">getPredictionCol</span><span class="p">())</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="n">out_col</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span><span class="o">.</span><span class="n">setFeaturesCol</span><span class="p">(</span><span class="n">vector_col</span><span class="p">)</span>\
+                                    <span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>\
+                                    <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">*</span><span class="n">cols</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_entropy_component</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_col</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">p_col</span><span class="o">.</span><span class="n">getItem</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">p_col</span><span class="o">.</span><span class="n">getItem</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">p_col</span><span class="o">.</span><span class="n">getItem</span><span class="p">(</span><span class="n">idx</span><span class="p">)))</span><span class="o">.</span><span class="n">otherwise</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_entropy_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+        <span class="n">p_col</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="n">probs</span><span class="p">)</span>
+
+        <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entropy_component</span><span class="p">(</span><span class="n">p_col</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">classes</span><span class="p">):</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">e</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entropy_component</span><span class="p">(</span><span class="n">p_col</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">e</span>
+
+
+<div class="viewcode-block" id="SparkMLModel.entropy">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SparkMLModel.entropy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_col</span> <span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Model must be trained to compute entropy&#39;</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">convert_to_vector</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">)</span>
+        <span class="n">prob_col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span><span class="o">.</span><span class="n">getProbabilityCol</span><span class="p">()</span>
+        <span class="n">prob_array</span> <span class="o">=</span> <span class="s1">&#39;prob_array&#39;</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span><span class="o">.</span><span class="n">setFeaturesCol</span><span class="p">(</span><span class="n">vector_col</span><span class="p">)</span>\
+                                    <span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>\
+                                    <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">*</span><span class="n">cols</span><span class="p">,</span> <span class="n">vector_to_array</span><span class="p">(</span><span class="n">prob_col</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="n">prob_array</span><span class="p">))</span>\
+                                    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="n">output_col</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entropy_expr</span><span class="p">(</span><span class="n">prob_array</span><span class="p">))</span>\
+                                    <span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">prob_array</span><span class="p">)</span></div>
+
+        
+<div class="viewcode-block" id="SparkMLModel.train">
+<a class="viewcode-back" href="../source/modules/ml_model.html#ml_model.SparkMLModel.train">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">label_column</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">return_estimator</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">convert_to_vector</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">vector_col</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model</span><span class="p">()</span><span class="o">.</span><span class="n">setFeaturesCol</span><span class="p">(</span><span class="n">vector_col</span><span class="p">)</span>\
+                                            <span class="o">.</span><span class="n">setLabelCol</span><span class="p">(</span><span class="n">label_column</span><span class="p">)</span>\
+                                            <span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>\
+                                            <span class="o">.</span><span class="n">setPredictionCol</span><span class="p">(</span><span class="s1">&#39;__PREDICTION_TMP&#39;</span><span class="p">)</span>\
+                                            <span class="o">.</span><span class="n">setProbabilityCol</span><span class="p">(</span><span class="s1">&#39;__PROB_TMP&#39;</span><span class="p">)</span>\
+                                            <span class="o">.</span><span class="n">setRawPredictionCol</span><span class="p">(</span><span class="s1">&#39;__RAW_PREDICTION_TMP&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trained_model</span> <span class="k">if</span> <span class="n">return_estimator</span> <span class="k">else</span> <span class="bp">self</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

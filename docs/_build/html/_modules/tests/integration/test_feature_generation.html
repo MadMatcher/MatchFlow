@@ -1,0 +1,348 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tests.integration.test_feature_generation &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">tests.integration.test_feature_generation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for tests.integration.test_feature_generation</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">featurization</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_features</span><span class="p">,</span> <span class="n">featurize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tokenizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">AlphaNumericTokenizer</span><span class="p">,</span> <span class="n">NumericTokenizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">feature</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactMatchFeature</span><span class="p">,</span> <span class="n">EditDistanceFeature</span><span class="p">,</span> <span class="n">JaccardFeature</span><span class="p">,</span> <span class="n">TFIDFFeature</span><span class="p">,</span> <span class="n">RelDiffFeature</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">featurization</span><span class="w"> </span><span class="kn">import</span> <span class="n">BuildCache</span>
+
+<span class="c1"># Create tokenizer instances to be reused across tests</span>
+<span class="n">alpha_numeric_tokenizer</span> <span class="o">=</span> <span class="n">AlphaNumericTokenizer</span><span class="p">()</span>
+<span class="n">numeric_tokenizer</span> <span class="o">=</span> <span class="n">NumericTokenizer</span><span class="p">()</span>
+
+<div class="viewcode-block" id="sample_data">
+<a class="viewcode-back" href="../../../source/modules/tests.integration.test_feature_generation.html#tests.integration.test_feature_generation.sample_data">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_data</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create sample pandas DataFrames for testing.&quot;&quot;&quot;</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+        <span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Hello World&#39;</span><span class="p">,</span> <span class="s1">&#39;Python Code&#39;</span><span class="p">,</span> <span class="s1">&#39;Test Case&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;25&#39;</span><span class="p">,</span> <span class="s1">&#39;30&#39;</span><span class="p">,</span> <span class="s1">&#39;35&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;A test description&#39;</span><span class="p">,</span> <span class="s1">&#39;Another description&#39;</span><span class="p">,</span> <span class="s1">&#39;Final test&#39;</span><span class="p">]</span>
+    <span class="p">})</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+        <span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Hello World&#39;</span><span class="p">,</span> <span class="s1">&#39;Python Script&#39;</span><span class="p">,</span> <span class="s1">&#39;Test Example&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;25&#39;</span><span class="p">,</span> <span class="s1">&#39;31&#39;</span><span class="p">,</span> <span class="s1">&#39;35&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;A test description&#39;</span><span class="p">,</span> <span class="s1">&#39;Different text&#39;</span><span class="p">,</span> <span class="s1">&#39;Final test case&#39;</span><span class="p">]</span>
+    <span class="p">})</span>
+    <span class="k">return</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span></div>
+
+
+<div class="viewcode-block" id="candidates">
+<a class="viewcode-back" href="../../../source/modules/tests.integration.test_feature_generation.html#tests.integration.test_feature_generation.candidates">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">candidates</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create candidate pairs for testing.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+        <span class="s1">&#39;id1_list&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">]],</span>
+        <span class="s1">&#39;id2&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>
+    <span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="spark_session">
+<a class="viewcode-back" href="../../../source/modules/tests.integration.test_feature_generation.html#tests.integration.test_feature_generation.spark_session">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">spark_session</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a Spark session for testing.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span> \
+        <span class="o">.</span><span class="n">master</span><span class="p">(</span><span class="s1">&#39;local[*]&#39;</span><span class="p">)</span> \
+        <span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="s1">&#39;spark.sql.execution.arrow.pyspark.enabled&#39;</span><span class="p">,</span> <span class="s1">&#39;true&#39;</span><span class="p">)</span> \
+        <span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="test_feature_creation_and_generation">
+<a class="viewcode-back" href="../../../source/modules/tests.integration.test_feature_generation.html#tests.integration.test_feature_generation.test_feature_creation_and_generation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_feature_creation_and_generation</span><span class="p">(</span><span class="n">sample_data</span><span class="p">,</span> <span class="n">candidates</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test feature creation and generation with pandas DataFrames.&quot;&quot;&quot;</span>
+    <span class="n">A</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">sample_data</span>
+    
+    <span class="c1"># Create features</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ExactMatchFeature</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">),</span>
+        <span class="n">EditDistanceFeature</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">),</span>
+        <span class="n">JaccardFeature</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="n">AlphaNumericTokenizer</span><span class="p">()),</span>
+        <span class="n">TFIDFFeature</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="n">AlphaNumericTokenizer</span><span class="p">())</span>
+    <span class="p">]</span>
+    
+    <span class="c1"># Generate features</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">featurize</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">candidates</span><span class="p">)</span>
+    
+    <span class="c1"># Verify output</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s1">&#39;features&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">columns</span>
+    <span class="k">assert</span> <span class="s1">&#39;_id&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">columns</span>
+    
+    <span class="c1"># Get rows by ID pairs</span>
+    <span class="n">test_example_vs_python</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="mi">2</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id2&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">6</span><span class="p">)]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">hello_world_vs_hello</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id2&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">python_script_vs_hello</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id2&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">5</span><span class="p">)]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c1"># Verify feature values for each pair</span>
+    <span class="c1"># Test Example vs Python Code</span>
+    <span class="n">feature_vector</span> <span class="o">=</span> <span class="n">test_example_vs_python</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_vector</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># No exact match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.16666667</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>  <span class="c1"># Edit distance</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># No token match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># No TFIDF match</span>
+    
+    <span class="c1"># Hello World vs Hello World</span>
+    <span class="n">feature_vector</span> <span class="o">=</span> <span class="n">hello_world_vs_hello</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Exact match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.8181818</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>  <span class="c1"># Edit distance</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># Token match (identical tokens)</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># TFIDF match (identical text)</span>
+    
+    <span class="c1"># Python Script vs Hello World</span>
+    <span class="n">feature_vector</span> <span class="o">=</span> <span class="n">python_script_vs_hello</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># No exact match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.23076923</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>  <span class="c1"># Edit distance</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># No token match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># No TFIDF match</span></div>
+
+
+<div class="viewcode-block" id="test_feature_generation_with_null_values">
+<a class="viewcode-back" href="../../../source/modules/tests.integration.test_feature_generation.html#tests.integration.test_feature_generation.test_feature_generation_with_null_values">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_feature_generation_with_null_values</span><span class="p">(</span><span class="n">sample_data</span><span class="p">,</span> <span class="n">candidates</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test feature generation with null values.&quot;&quot;&quot;</span>
+    <span class="n">A</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">sample_data</span>
+    
+    <span class="c1"># Add null values</span>
+    <span class="n">A</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">B</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    
+    <span class="c1"># Create features</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ExactMatchFeature</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">),</span>
+        <span class="n">EditDistanceFeature</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">),</span>
+        <span class="n">JaccardFeature</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="n">AlphaNumericTokenizer</span><span class="p">())</span>
+    <span class="p">]</span>
+    
+    <span class="c1"># Generate features</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">featurize</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">candidates</span><span class="p">)</span>
+    
+    <span class="c1"># Verify output</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s1">&#39;features&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">columns</span>
+    <span class="k">assert</span> <span class="s1">&#39;_id&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">columns</span>
+    
+    <span class="c1"># Get row with null values by ID</span>
+    <span class="n">null_pair</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id2&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c1"># Verify null handling</span>
+    <span class="n">feature_vector</span> <span class="o">=</span> <span class="n">null_pair</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_vector</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">feature_vector</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># Exact match with null</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">feature_vector</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># Edit distance with null</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># Token match (identical tokens)</span></div>
+
+
+<div class="viewcode-block" id="test_large_scale_feature_generation">
+<a class="viewcode-back" href="../../../source/modules/tests.integration.test_feature_generation.html#tests.integration.test_feature_generation.test_large_scale_feature_generation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_large_scale_feature_generation</span><span class="p">(</span><span class="n">sample_data</span><span class="p">,</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">spark_session</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test feature generation with large-scale data using Spark.&quot;&quot;&quot;</span>
+    <span class="n">A</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">sample_data</span>
+    
+    <span class="c1"># Create larger datasets by duplicating</span>
+    <span class="n">n_records</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="n">A_large</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">A</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_records</span> <span class="o">//</span> <span class="nb">len</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="n">n_records</span><span class="p">]</span>
+    <span class="n">B_large</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">B</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_records</span> <span class="o">//</span> <span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="n">n_records</span><span class="p">]</span>
+    
+    <span class="c1"># Create features</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ExactMatchFeature</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">),</span>
+        <span class="n">EditDistanceFeature</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">),</span>
+        <span class="n">JaccardFeature</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="n">AlphaNumericTokenizer</span><span class="p">())</span>
+    <span class="p">]</span>
+    
+    <span class="c1"># Convert to Spark DataFrames</span>
+    <span class="n">A_spark</span> <span class="o">=</span> <span class="n">spark_session</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">A_large</span><span class="p">)</span>
+    <span class="n">B_spark</span> <span class="o">=</span> <span class="n">spark_session</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">B_large</span><span class="p">)</span>
+    <span class="n">candidates_spark</span> <span class="o">=</span> <span class="n">spark_session</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+    
+    <span class="c1"># Generate features</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">featurize</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">A_spark</span><span class="p">,</span> <span class="n">B_spark</span><span class="p">,</span> <span class="n">candidates_spark</span><span class="p">)</span>
+    
+    <span class="c1"># Verify output</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s1">&#39;features&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">columns</span>
+    <span class="k">assert</span> <span class="s1">&#39;_id&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">columns</span>
+    
+    <span class="c1"># Get specific pairs by ID</span>
+    <span class="n">test_example_vs_python</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="mi">2</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id2&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">6</span><span class="p">)]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">hello_world_vs_hello</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id2&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">python_script_vs_hello</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id2&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">5</span><span class="p">)]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c1"># Verify feature values for each pair</span>
+    <span class="c1"># Test Example vs Python Code</span>
+    <span class="n">feature_vector</span> <span class="o">=</span> <span class="n">test_example_vs_python</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># No exact match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.16666667</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>  <span class="c1"># Edit distance</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># No token match</span>
+    
+    <span class="c1"># Hello World vs Hello World</span>
+    <span class="n">feature_vector</span> <span class="o">=</span> <span class="n">hello_world_vs_hello</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Exact match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.8181818</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>  <span class="c1"># Edit distance</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># Token match (identical tokens)</span>
+    
+    <span class="c1"># Python Script vs Hello World</span>
+    <span class="n">feature_vector</span> <span class="o">=</span> <span class="n">python_script_vs_hello</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># No exact match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.23076923</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>  <span class="c1"># Edit distance</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># No token match</span></div>
+
+
+<div class="viewcode-block" id="test_feature_generation_with_custom_features">
+<a class="viewcode-back" href="../../../source/modules/tests.integration.test_feature_generation.html#tests.integration.test_feature_generation.test_feature_generation_with_custom_features">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_feature_generation_with_custom_features</span><span class="p">(</span><span class="n">sample_data</span><span class="p">,</span> <span class="n">candidates</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test feature generation with custom feature combinations.&quot;&quot;&quot;</span>
+    <span class="n">A</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">sample_data</span>
+    
+    <span class="c1"># Create custom features</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ExactMatchFeature</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">),</span>
+        <span class="n">EditDistanceFeature</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">),</span>
+        <span class="n">JaccardFeature</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="n">AlphaNumericTokenizer</span><span class="p">()),</span>
+        <span class="n">TFIDFFeature</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="n">AlphaNumericTokenizer</span><span class="p">()),</span>
+        <span class="n">RelDiffFeature</span><span class="p">(</span><span class="s1">&#39;age&#39;</span><span class="p">,</span> <span class="s1">&#39;age&#39;</span><span class="p">)</span>
+    <span class="p">]</span>
+    
+    <span class="c1"># Generate features</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">featurize</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">candidates</span><span class="p">)</span>
+    
+    <span class="c1"># Verify output</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s1">&#39;features&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">columns</span>
+    <span class="k">assert</span> <span class="s1">&#39;_id&#39;</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">columns</span>
+    
+    <span class="c1"># Get specific pairs by ID</span>
+    <span class="n">test_example_vs_python</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="mi">2</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id2&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">6</span><span class="p">)]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">hello_world_vs_hello</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id2&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">python_script_vs_hello</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;id2&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">5</span><span class="p">)]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c1"># Verify feature values for each pair</span>
+    <span class="c1"># Test Example vs Python Code</span>
+    <span class="n">feature_vector</span> <span class="o">=</span> <span class="n">test_example_vs_python</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_vector</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># No exact match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.16666667</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>  <span class="c1"># Edit distance</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># No token match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># No TFIDF match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.14285715</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># Age difference (|30-35|/35 = 5/35)</span>
+    
+    <span class="c1"># Hello World vs Hello World</span>
+    <span class="n">feature_vector</span> <span class="o">=</span> <span class="n">hello_world_vs_hello</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Exact match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.8181818</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>  <span class="c1"># Edit distance</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># Token match (identical tokens)</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># TFIDF match (identical text)</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># Same age</span>
+    
+    <span class="c1"># Python Script vs Hello World</span>
+    <span class="n">feature_vector</span> <span class="o">=</span> <span class="n">python_script_vs_hello</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># No exact match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.23076923</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>  <span class="c1"># Edit distance</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># No token match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># No TFIDF match</span>
+    <span class="k">assert</span> <span class="n">feature_vector</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="n">pytest</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># Age difference</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

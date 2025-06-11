@@ -1,0 +1,222 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tools module &mdash; madmatcher-tools 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            madmatcher-tools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">tools module</a><ul>
+<li><a class="reference internal" href="#tools.apply_matcher"><code class="docutils literal notranslate"><span class="pre">apply_matcher()</span></code></a></li>
+<li><a class="reference internal" href="#tools.down_sample"><code class="docutils literal notranslate"><span class="pre">down_sample()</span></code></a></li>
+<li><a class="reference internal" href="#tools.label_data"><code class="docutils literal notranslate"><span class="pre">label_data()</span></code></a></li>
+<li><a class="reference internal" href="#tools.select_seeds"><code class="docutils literal notranslate"><span class="pre">select_seeds()</span></code></a></li>
+<li><a class="reference internal" href="#tools.train_matcher"><code class="docutils literal notranslate"><span class="pre">train_matcher()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">madmatcher-tools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">tools module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/source/modules/tools.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-tools">
+<span id="tools-module"></span><h1>tools module<a class="headerlink" href="#module-tools" title="Link to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="tools.apply_matcher">
+<span class="sig-prename descclassname"><span class="pre">tools.</span></span><span class="sig-name descname"><span class="pre">apply_matcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tools.html#apply_matcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tools.apply_matcher" title="Link to this definition">¶</a></dt>
+<dd><p>applies a trained model on unlabeled data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="ml_model.html#id3" title="ml_model.MLModel"><em>MLModel</em></a><em>, </em><em>sklearn model</em><em>, or </em><em>spark model</em>) – The trained model to apply to the data. Can be:
+- An MLModel instance (SKLearnModel or SparkMLModel)
+- A trained sklearn model (any BaseEstimator)
+- A trained spark model (any model with transform method)</p></li>
+<li><p><strong>df</strong> (<em>pandas DataFrame</em>) – the DataFrame that you want to apply the model to</p></li>
+<li><p><strong>feature_col</strong> (<em>str</em>) – the column that will be used to make a prediction</p></li>
+<li><p><strong>output_col</strong> (<em>str</em>) – the column that will store the predicted label from the model</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the DataFrame with a prediction column holding the predictions</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tools.down_sample">
+<span class="sig-prename descclassname"><span class="pre">tools.</span></span><span class="sig-name descname"><span class="pre">down_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fvs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_id_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'score'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bucket_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tools.html#down_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tools.down_sample" title="Link to this definition">¶</a></dt>
+<dd><p>down sample by score_column to produce percent * fvs.count() rows</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fvs</strong> (<em>pandas DataFrame</em>) – the feature vectors to be downsampled</p></li>
+<li><p><strong>percent</strong> (<em>float</em>) – the portion fo the vectors to be output, (0.0, 1.0]</p></li>
+<li><p><strong>score_column</strong> (<em>str</em>) – the column that scored the vectors, should be positively correlated with the probability of the pair being a match</p></li>
+<li><p><strong>CHECK</strong> (<em>should not need the search_id_column</em><em> or </em><em>bucket size because we don't need to hash into buckets for non-spark</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the down sampled dataset with percent * fvs.count() rows with the same schema as fvs</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tools.label_data">
+<span class="sig-prename descclassname"><span class="pre">tools.</span></span><span class="sig-name descname"><span class="pre">label_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labeler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fvs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seeds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tools.html#label_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tools.label_data" title="Link to this definition">¶</a></dt>
+<dd><p>generate labeled data from unlabeled data using Batch Active Learning or Continuious Active Learning</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="ml_model.html#id3" title="ml_model.MLModel"><em>MLModel</em></a>) – the model object that will be used for training and applying to the data</p></li>
+<li><p><strong>mode</strong> (<em>Literal</em><em>[</em><em>&quot;batch&quot;</em><em>, </em><em>&quot;continuous&quot;</em><em>]</em>) – batch or continuous to determine which type of active learning to use</p></li>
+<li><p><strong>labeler</strong> (<a class="reference internal" href="labeler.html#labeler.Labeler" title="labeler.Labeler"><em>Labeler</em></a>) – the labeler object that will label data during active learning</p></li>
+<li><p><strong>fvs</strong> (<em>pandas DataFrame</em>) – the data that needs to be labeled</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with ids of potential matches and the corresponding label</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tools.select_seeds">
+<span class="sig-prename descclassname"><span class="pre">tools.</span></span><span class="sig-name descname"><span class="pre">select_seeds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fvs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nseeds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labeler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'score'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tools.html#select_seeds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tools.select_seeds" title="Link to this definition">¶</a></dt>
+<dd><p>select seeds to train a model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fvs</strong> (<em>pandas DataFrame</em>) – the DataFrame with feature vectors that is your training data</p></li>
+<li><p><strong>nseeds</strong> (<em>int</em>) – the number of seeds you want to use to train an initial model</p></li>
+<li><p><strong>labeler</strong> (<a class="reference internal" href="labeler.html#labeler.Labeler" title="labeler.Labeler"><em>Labeler</em></a>) – the labeler object you want to use to assign labels to rows</p></li>
+<li><p><strong>score_column</strong> (<em>str</em>) – the name of the score column in your fvs DataFrame</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A DataFrame with labeled seeds, schema is (previous schema of fvs, <cite>label</cite>) where the values in label are either 0.0 or 1.0</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tools.train_matcher">
+<span class="sig-prename descclassname"><span class="pre">tools.</span></span><span class="sig-name descname"><span class="pre">train_matcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_col</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/tools.html#train_matcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tools.train_matcher" title="Link to this definition">¶</a></dt>
+<dd><p>train a matcher with labeled data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="ml_model.html#id3" title="ml_model.MLModel"><em>MLModel</em></a>) – the model object that you want to train</p></li>
+<li><p><strong>df</strong> (<em>pandas DataFrame</em>) – the DataFrame which will be used to train the data with at least a feature column and a label column</p></li>
+<li><p><strong>feature_col</strong> (<em>str</em>) – the name of the feature column in df</p></li>
+<li><p><strong>label_col</strong> (<em>str</em>) – the name of the label column in df</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the trained MLModel</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="ml_model.html#id3" title="ml_model.MLModel">MLModel</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Dev Ahluwalia.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

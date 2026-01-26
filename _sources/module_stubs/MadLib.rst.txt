@@ -1,6 +1,0 @@
-﻿MatchFlow
-======
-
-.. automodule:: MatchFlow
-
-   

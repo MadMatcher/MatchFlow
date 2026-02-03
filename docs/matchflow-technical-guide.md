@@ -51,7 +51,7 @@ You can combine the MatchFlow functions (in a Python script) to create a variety
 
 We provide [Python scripts for several such workflows](https://github.com/MadMatcher/MatchFlow/blob/main/docs/workflow-examples.md). More workflows can be constructed using MatchFlow functions.
 
-#### IMPORTANT NOTE IF USING OUTPUT FROM SPARKLY OR DELEX
+### IMPORTANT NOTE IF USING OUTPUT FROM SPARKLY OR DELEX
 
 Sparkly and Delex output a candidates DataFrame where each row contains:
 
@@ -68,13 +68,13 @@ If you are using the candidates output from Sparkly/Delex, modify your `candidat
 - Rename Sparkly/Delex’s table-B ID column (`_id` in our reference workflows) to `id2`
 - Rename `ids` to `id1_list`
 
-##### Rename examples
+#### Rename examples
 
-**Pandas**
+*Pandas*
 ```python
 candidates = candidates.rename(columns={"_id": "id2", "ids": "id1_list"})
 ```
-**Spark**
+*Spark*
 ```python
 candidates = candidates.withColumnRenamed("_id", "id2").withColumnRenamed("ids", "id1_list")
 ```

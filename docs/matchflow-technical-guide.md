@@ -51,6 +51,34 @@ You can combine the MatchFlow functions (in a Python script) to create a variety
 
 We provide [Python scripts for several such workflows](https://github.com/MadMatcher/MatchFlow/blob/main/docs/workflow-examples.md). More workflows can be constructed using MatchFlow functions.
 
+#### IMPORTANT NOTE IF USING OUTPUT FROM SPARKLY OR DELEX
+
+Sparkly and Delex output a candidates DataFrame where each row contains:
+
+- a **table-B record ID** (named `_id` in our reference workflows)
+- `ids`: a list of candidate **table-A record IDs**
+
+MatchFlow `featurize()` requires the candidates DataFrame to use these column names:
+
+- `id2`: table-B record ID
+- `id1_list`: list of table-A candidate record IDs
+
+If you are using the candidates output from Sparkly/Delex, modify your `candidates` DataFrame as follows before calling `featurize()`:
+
+- Rename Sparkly/Delex’s table-B ID column (`_id` in our reference workflows) to `id2`
+- Rename `ids` to `id1_list`
+
+##### Rename examples
+
+**Pandas**
+```python
+candidates = candidates.rename(columns={"_id": "id2", "ids": "id1_list"})
+```
+**Spark**
+```python
+candidates = candidates.withColumnRenamed("_id", "id2").withColumnRenamed("ids", "id1_list")
+```
+
 ### The Core Functions of MatchFlow
 
 We now describe the core functions that you can combine to create a variety of EM workflows.

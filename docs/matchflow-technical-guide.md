@@ -221,6 +221,23 @@ This function converts each tuple pair in the candidates set into a feature vect
 - `candidates` is a Pandas or Spark dataframe that specifies a set of pairs of record IDs. This dataframe has two required columns:
   - `id2`: Record ID from table B (must appear in the `_id` column of dataframe B)
   - `id1_list`: Record IDs from table A (must appear in the `_id` column of dataframe A)
+ <span style="color:#c00000;">
+
+**Note: Sparkly/Delex candidate-set column names**
+
+If your `candidates` DataFrame was produced by Sparkly or Delex, the column names may differ from the `featurize()` examples. In our reference blocking workflows, Sparkly/Delex typically output:
+
+- `_id`: the record id from table **B**
+- `ids`: the list of candidate record ids from table **A**
+
+`featurize()` expects the same information, but with standardized column names:
+
+- `id2`: record id from table **B**
+- `id1_list`: list of candidate record ids from table **A**
+
+**IMPORTANT:** If your columns are `_id` / `ids`, rename them to `id2` / `id1_list` before calling `featurize()`.
+
+</span>
 - `output_col` is the name of the column in the output dataframe that we will use to store feature vectors.
 - `fill_na` is the value for missing data. We will use this value to fill in when similarity computation fails due to missing data. The default value is 0.0 (no similarity). Other common values are -1.0 (unknown), numpy.nan, or other float values. This is because missing data is common, and the system needs a consistent way to handle it.
 

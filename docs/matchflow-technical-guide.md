@@ -222,7 +222,7 @@ This function converts each tuple pair in the candidates set into a feature vect
   - `id2`: Record ID from table B (must appear in the `_id` column of dataframe B)
   - `id1_list`: Record IDs from table A (must appear in the `_id` column of dataframe A)
   ```diff
-  - NOTE: Sparkly/Delex candidate-set column names ("_id" nuance)
+  - NOTE: Sparkly/Delex candidate-set column names
   - Sparkly/Delex output candidates will not match MatchFlow's required
   - candidates column names, so you must rename columns before featurize().
   -

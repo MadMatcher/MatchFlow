@@ -222,15 +222,42 @@ This function converts each tuple pair in the candidates set into a feature vect
   - `id2`: Record ID from table B (must appear in the `_id` column of dataframe B)
   - `id1_list`: Record IDs from table A (must appear in the `_id` column of dataframe A)
   ```diff
-  - NOTE: Sparkly/Delex candidate-set column names
-  - If your `candidates` DataFrame was produced by Sparkly or Delex, the column names may differ from the `featurize()` examples.
-  - In our reference blocking workflows, Sparkly/Delex typically output:
-  -   - `_id`: the record id from table B
-  -   - `ids`: the list of candidate record ids from table A
-  - `featurize()` expects the same information, but with standardized column names:
-  -   - `id2`: record id from table B
-  -   - `id1_list`: list of candidate record ids from table A
-  - IMPORTANT: If your columns are `_id` / `ids`, rename them to `id2` / `id1_list` before calling `featurize()`.
+  - NOTE: Sparkly/Delex candidate-set column names ("_id" nuance)
+  - Sparkly/Delex output candidates will not match MatchFlow's required
+  - candidates column names, so you must rename columns before featurize().
+  -
+  - Sparkly/Delex output one row per record from table B,
+  - plus a list of candidate ids from table A:
+  -   (table B id, list of table A ids)
+  -
+  - In our reference workflows, the id column in table B is named `_id`,
+  - so the output uses:
+  -   - `_id`: the id from table B
+  -   - `ids`: the list of candidate ids from table A
+  -
+  - If you adapt the workflow to your own data,
+  - the table B id column may be named something else (e.g., `_id_b`).
+  - Regardless of the name, it is the id from table B.
+  -
+  - `featurize()` requires the candidates DataFrame to have:
+  -   - `id2`: id from table B
+  -   - `id1_list`: list of candidate ids from table A
+  -
+  - IMPORTANT:
+  - Rename (table B id column) -> `id2`
+  - Rename `ids` -> `id1_list`
+  -
+  - To rename columns in Pandas:
+  -   candidates = candidates.rename(
+  -       columns={"_id": "id2", "ids": "id1_list"}
+  -   )
+  -
+  - To rename columns in Spark:
+  -   candidates = (
+  -       candidates
+  -           .withColumnRenamed("_id", "id2")
+  -           .withColumnRenamed("ids", "id1_list")
+  -   )
   ```
 - `output_col` is the name of the column in the output dataframe that we will use to store feature vectors.
 - `fill_na` is the value for missing data. We will use this value to fill in when similarity computation fails due to missing data. The default value is 0.0 (no similarity). Other common values are -1.0 (unknown), numpy.nan, or other float values. This is because missing data is common, and the system needs a consistent way to handle it.

@@ -292,13 +292,19 @@ def featurize(
     Parameters
     ----------
     features : List[Callable]
-        a DataFrame containing initialized feature objects for columns in A, B
+        a list containing initialized feature objects for columns in A, B
     A : Union[pd.DataFrame, SparkDataFrame]
         the records of table A
     B : Union[pd.DataFrame, SparkDataFrame]
         the records of table B
     candidates : Union[pd.DataFrame, SparkDataFrame]
-        id pairs of A and B that are potential matches
+        blocked candidates with required columns:
+        - `id2`: id from table B
+        - `id1_list`: list of candidate ids from table A.
+        If your candidates were produced by Sparkly/Delex, you must rename columns
+        to this format before calling `featurize()`:
+        - rename the column that contains the table B id -> `id2`
+        - rename `ids` -> `id1_list`
     output_col : str
         the name of the column for the resulting feature vectors, default `feature_vectors`
     fill_na : float
@@ -307,7 +313,7 @@ def featurize(
     -------
     Union[pd.DataFrame, SparkDataFrame]
         DataFrame with feature vectors created with the following schema:
-        (`id2`, `id1`, `fv`, other columns from candidates).
+        (`id2`, `id1`, `output_col`, other columns from candidates).
         Returns pandas DataFrame if inputs A and B are pandas DataFrames,
         otherwise returns Spark DataFrame.
     """

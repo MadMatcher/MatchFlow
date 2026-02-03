@@ -221,7 +221,7 @@ This function converts each tuple pair in the candidates set into a feature vect
 - `candidates` is a Pandas or Spark dataframe that specifies a set of pairs of record IDs. This dataframe has two required columns:
   - `id2`: Record ID from table B (must appear in the `_id` column of dataframe B)
   - `id1_list`: Record IDs from table A (must appear in the `_id` column of dataframe A)
-  ```
+  ```diff
   - NOTE: Sparkly/Delex candidate-set column names
   - If your `candidates` DataFrame was produced by Sparkly or Delex, the column names may differ from the `featurize()` examples.
   - In our reference blocking workflows, Sparkly/Delex typically output:

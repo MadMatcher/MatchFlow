@@ -50,20 +50,20 @@ You can combine the MatchFlow functions (in a Python script) to create a variety
 - A workflow in which you just want to label a set of examples.
 
 We provide [Python scripts for several such workflows](https://github.com/MadMatcher/MatchFlow/blob/main/docs/workflow-examples.md). More workflows can be constructed using MatchFlow functions.
+_________________________________________________________________
+### IMPORTANT NOTE IF USING THE BLOCKING OUTPUT OF SPARKLY OR DELEX
 
-### IMPORTANT NOTE IF USING OUTPUT FROM SPARKLY OR DELEX
-
-Sparkly and Delex output a candidates DataFrame where each row contains:
+If you feed the blocking output of Sparkly or Delex into the matching step, be aware that this blocking output is a table whose schema does not conform to the table schema required by MatchFlow. So you will have to revise this schema a little bit. Specifically, the blocking output of Sparkly or Delex is a DataFrame where each row contains:
 
 - a **table-B record ID** (named `_id` in our reference workflows)
 - `ids`: a list of candidate **table-A record IDs**
 
-MatchFlow `featurize()` requires the candidates DataFrame to use these column names:
+However, the function `featurize()` in MatchFlow requires the input DataFrame to use these column names:
 
 - `id2`: table-B record ID
 - `id1_list`: list of table-A candidate record IDs
 
-If you are using the candidates output from Sparkly/Delex, modify your `candidates` DataFrame as follows before calling `featurize()`:
+So if you use the blocking output of Sparkly or Delex, modify the DataFrame as follows before calling `featurize()`:
 
 - Rename Sparkly/Delex’s table-B ID column (`_id` in our reference workflows) to `id2`
 - Rename `ids` to `id1_list`
@@ -78,6 +78,7 @@ candidates = candidates.rename(columns={"_id": "id2", "ids": "id1_list"})
 ```python
 candidates = candidates.withColumnRenamed("_id", "id2").withColumnRenamed("ids", "id1_list")
 ```
+______________________________________________________________________
 
 ### The Core Functions of MatchFlow
 

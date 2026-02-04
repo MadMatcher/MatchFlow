@@ -1108,13 +1108,9 @@ label are either 0.0 or 1.0</p>
 <li><p><strong>features</strong> (<em>List</em><em>[</em><em>Callable</em><em>]</em>) – a list containing initialized feature objects for columns in A, B</p></li>
 <li><p><strong>A</strong> (<em>Union</em><em>[</em><em>pd.DataFrame</em><em>, </em><em>SparkDataFrame</em><em>]</em>) – the records of table A</p></li>
 <li><p><strong>B</strong> (<em>Union</em><em>[</em><em>pd.DataFrame</em><em>, </em><em>SparkDataFrame</em><em>]</em>) – the records of table B</p></li>
-<li><p><strong>candidates</strong> (<em>Union</em><em>[</em><em>pd.DataFrame</em><em>, </em><em>SparkDataFrame</em><em>]</em>) – blocked candidates with required columns:
+<li><p><strong>candidates</strong> (<em>Union</em><em>[</em><em>pd.DataFrame</em><em>, </em><em>SparkDataFrame</em><em>]</em>) – id pairs of A and B that are potential matches candidates with the following columns:
 - <cite>id2</cite>: id from table B
-- <cite>id1_list</cite>: list of candidate ids from table A.
-If your candidates were produced by Sparkly/Delex, you must rename columns
-to this format before calling <cite>featurize()</cite>:
-- rename the column that contains the table B id -&gt; <cite>id2</cite>
-- rename <cite>ids</cite> -&gt; <cite>id1_list</cite></p></li>
+- <cite>id1_list</cite>: list of candidate ids from table A.</p></li>
 <li><p><strong>output_col</strong> (<em>str</em>) – the name of the column for the resulting feature vectors, default <cite>feature_vectors</cite></p></li>
 <li><p><strong>fill_na</strong> (<em>float</em>) – value to fill in for missing data, default 0.0</p></li>
 </ul>

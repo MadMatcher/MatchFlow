@@ -251,7 +251,12 @@ This function converts each tuple pair in the candidates set into a feature vect
   - `id2`: Record ID from table B (must appear in the `_id` column of dataframe B)
   - `id1_list`: Record IDs from table A (must appear in the `_id` column of dataframe A)
   ```diff
-  IMPORTANT: If `candidates` is the blocking output of Sparkly or Delex, then be aware that this blocking output is a table whose schema does not conform to the table schema required by featurize(), so you will have to revise this schema a little bit. See the note "IMPORTANT NOTE IF USING THE BLOCKING OUTPUT OF SPARKLY OR DELEX" near the start of this technical guide. 
+  - IMPORTANT: If `candidates` is the blocking output of Sparkly or Delex,
+  - then be aware that this blocking output is a table whose schema does not
+  - conform to the table schema required by featurize(), so you will
+  - have to revise this schema a little bit. See the note
+  - "IMPORTANT NOTE IF USING THE BLOCKING OUTPUT OF SPARKLY OR DELEX"
+  - near the start of this technical guide. 
   ```
 - `output_col` is the name of the column in the output dataframe that we will use to store feature vectors.
 - `fill_na` is the value for missing data. We will use this value to fill in when similarity computation fails due to missing data. The default value is 0.0 (no similarity). Other common values are -1.0 (unknown), numpy.nan, or other float values. This is because missing data is common, and the system needs a consistent way to handle it.

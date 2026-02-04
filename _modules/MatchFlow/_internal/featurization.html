@@ -383,13 +383,9 @@
 <span class="sd">    B : Union[pd.DataFrame, SparkDataFrame]</span>
 <span class="sd">        the records of table B</span>
 <span class="sd">    candidates : Union[pd.DataFrame, SparkDataFrame]</span>
-<span class="sd">        blocked candidates with required columns:</span>
+<span class="sd">        id pairs of A and B that are potential matches candidates with the following columns:</span>
 <span class="sd">        - `id2`: id from table B</span>
 <span class="sd">        - `id1_list`: list of candidate ids from table A.</span>
-<span class="sd">        If your candidates were produced by Sparkly/Delex, you must rename columns</span>
-<span class="sd">        to this format before calling `featurize()`:</span>
-<span class="sd">        - rename the column that contains the table B id -&gt; `id2`</span>
-<span class="sd">        - rename `ids` -&gt; `id1_list`</span>
 <span class="sd">    output_col : str</span>
 <span class="sd">        the name of the column for the resulting feature vectors, default `feature_vectors`</span>
 <span class="sd">    fill_na : float</span>

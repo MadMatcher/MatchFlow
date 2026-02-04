@@ -298,13 +298,9 @@ def featurize(
     B : Union[pd.DataFrame, SparkDataFrame]
         the records of table B
     candidates : Union[pd.DataFrame, SparkDataFrame]
-        blocked candidates with required columns:
+        id pairs of A and B that are potential matches candidates with the following columns:
         - `id2`: id from table B
-        - `id1_list`: list of candidate ids from table A.
-        If your candidates were produced by Sparkly/Delex, you must rename columns
-        to this format before calling `featurize()`:
-        - rename the column that contains the table B id -> `id2`
-        - rename `ids` -> `id1_list`
+        - `id1_list`: list of candidate ids from table A
     output_col : str
         the name of the column for the resulting feature vectors, default `feature_vectors`
     fill_na : float

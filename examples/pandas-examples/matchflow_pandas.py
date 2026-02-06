@@ -23,27 +23,10 @@ from MatchFlow import GoldLabeler, SKLearnModel
 table_a = pd.read_parquet('../data/dblp_acm/table_a.parquet')
 table_b = pd.read_parquet('../data/dblp_acm/table_b.parquet')
 candidates = pd.read_parquet('../data/dblp_acm/cand.parquet')
-# READ THIS IMPORTANT NOTE: Using Sparkly/Delex candidates as MatchFlow input
-#
-# Sparkly/Delex produce a candidate set with:
-#   - <Table B id column>: the id of the Table B record being matched (one row per Table B record)
-#   - "ids":              list of candidate ids from Table A for that Table B record
-#
-# In our reference workflows, the Table B id column is named "_id", so the output columns include:
-#   "_id" (Table B id) and "ids" (list of Table A ids)
-# If you adapted the workflow to your own data, the Table B id column may have a different name than "_id". 
-# You need to know the name of the column that contains the id from table B.
-#
-# MatchFlow expects the same data (id from a record in table B and a list of ids from table A), but with standardized column names:
-#   Sparkly/Delex: (<Table B id column>, ids)  ->  MatchFlow: (id2, id1_list)
-#
-# Therefore, if you used Sparkly/Delex to block your data, you would need to rename your columns accordingly before calling MatchFlow.
-candidates = candidates.rename(columns={"_id": "id2", "ids": "id1_list"})  # if your Table B id column is "_id"
-# If your Table B id column is not "_id", rename that column to "id2" instead:
-# candidates = candidates.rename(columns={YOUR_TABLE_B_ID_COL: "id2", "ids": "id1_list"})
 
 # In our example, we only need the id2 and id1_list columns.
-# Unless it is absolutely necessary to keep other columns that are present in the candidates set, we recommend selecting only the id2 and id1_list columns to reduce memory usage.
+# Unless it is absolutely necessary to keep other columns that are present in the candidates set, 
+# we recommend selecting only the id2 and id1_list columns to reduce memory usage.
 candidates = candidates[['id2', 'id1_list']]
 
 gold_labels = pd.read_parquet('../data/dblp_acm/gold.parquet')

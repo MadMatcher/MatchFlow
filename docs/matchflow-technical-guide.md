@@ -50,35 +50,6 @@ You can combine the MatchFlow functions (in a Python script) to create a variety
 - A workflow in which you just want to label a set of examples.
 
 We provide [Python scripts for several such workflows](https://github.com/MadMatcher/MatchFlow/blob/main/docs/workflow-examples.md). More workflows can be constructed using MatchFlow functions.
-_________________________________________________________________
-### IMPORTANT NOTE IF USING THE BLOCKING OUTPUT OF SPARKLY OR DELEX
-
-If you feed the blocking output of Sparkly or Delex into the matching step, be aware that this blocking output is a table whose schema does not conform to the table schema required by MatchFlow. So you will have to revise this schema a little bit. Specifically, the blocking output of Sparkly or Delex is a DataFrame where each row contains:
-
-- a **table-B record ID** (named `_id` in our reference workflows)
-- `ids`: a list of candidate **table-A record IDs**
-
-However, the function `featurize()` in MatchFlow requires the input DataFrame to use these column names:
-
-- `id2`: table-B record ID
-- `id1_list`: list of table-A candidate record IDs
-
-So if you use the blocking output of Sparkly or Delex, modify the DataFrame as follows before calling `featurize()`:
-
-- Rename Sparkly/Delex’s table-B ID column (`_id` in our reference workflows) to `id2`
-- Rename `ids` to `id1_list`
-
-#### Rename examples
-
-*Pandas*
-```python
-candidates = candidates.rename(columns={"_id": "id2", "ids": "id1_list"})
-```
-*Spark*
-```python
-candidates = candidates.withColumnRenamed("_id", "id2").withColumnRenamed("ids", "id1_list")
-```
-______________________________________________________________________
 
 ### The Core Functions of MatchFlow
 
@@ -129,6 +100,7 @@ In this case, we create the features as follows:
 - First, we detect and drop all columns with too many missing values (above null_threshold). Then we analyze the remaining columns to detect their types (e.g., numeric vs text). We also compute the average token count for each tokenizer-column combination.
 - Then we create the following features:
   - _Exact Match Features_: Created for all columns.
+
   ```python
   # Every column gets an exact match feature
   ExactMatchFeature(column_name, column_name)
@@ -140,6 +112,7 @@ In this case, we create the features as follows:
     RelDiffFeature(column_name, column_name)
     ```
   - _Token-based Features_: Created based on tokenizer analysis
+
   ```python
   # For each tokenizer-column combination with avg_count >= 3:
   # Creates the five features using the default similarity functions (TF-IDF, Jaccard, SIF, Overlap, Cosine)
@@ -245,19 +218,11 @@ def featurize(
 
 This function converts each tuple pair in the candidates set into a feature vector, using the features created in create_features.
 
-- `features` is a list of callable feature objects (typically from `create_features()`, but can be from another source.
+- `features` is a list of callable feature objects (typically from `create_features()`, but can be from another source).
 - A and B are Pandas or Spark dataframes that store the two tables to be matched. Both dataframes must have an `_id` column.
 - `candidates` is a Pandas or Spark dataframe that specifies a set of pairs of record IDs. This dataframe has two required columns:
   - `id2`: Record ID from table B (must appear in the `_id` column of dataframe B)
   - `id1_list`: Record IDs from table A (must appear in the `_id` column of dataframe A)
-  ```diff
-  - IMPORTANT: If `candidates` is the blocking output of Sparkly or Delex,
-  - then be aware that this blocking output is a table whose schema does not
-  - conform to the table schema required by featurize(), so you will
-  - have to revise this schema a little bit. See the note
-  - "IMPORTANT NOTE IF USING THE BLOCKING OUTPUT OF SPARKLY OR DELEX"
-  - near the start of this technical guide. 
-  ```
 - `output_col` is the name of the column in the output dataframe that we will use to store feature vectors.
 - `fill_na` is the value for missing data. We will use this value to fill in when similarity computation fails due to missing data. The default value is 0.0 (no similarity). Other common values are -1.0 (unknown), numpy.nan, or other float values. This is because missing data is common, and the system needs a consistent way to handle it.
 
@@ -341,7 +306,7 @@ As discussed earlier, if the candidates set (the output of blocking) is large (e
 **How It Works:** This function works as follows:
 
 1. Scans through all rows in 'fvs' and assigns the rows into a set of buckets, using a hash function on the values of 'search_id_column'. It ensures that the size of each bucket never exceeds 'bucket_size'.
-2. For each bucket of size _n_, the function first sorts the rows in that bucket in decreasing order of score in 'score_column', then takes the top _n x 'percent'_ rows in that order.
+2. For each bucket of size _n_, the function first sorts the rows in that bucket in decreasing order of score in 'score*column', then takes the top \_n x 'percent'* rows in that order.
 3. The function returns the union of all the rows taken from the buckets to be the desired sample.
 
 Intuitively, the sample contains the top-scoring rows of each bucket. The top-scoring rows are likely to contain matches, and so the sample is likely to contain a reasonable number of matches. The above function may perform Steps 1-3 using Spark to save time.

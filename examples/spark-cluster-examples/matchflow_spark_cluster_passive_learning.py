@@ -18,7 +18,8 @@ warnings.filterwarnings('ignore')
 # Import MatchFlow functions
 from MatchFlow import (
     create_features, featurize, 
-    train_matcher, apply_matcher, 
+    train_matcher, apply_matcher,
+    check_tables, check_candidates, check_labeled_data
 )
 from MatchFlow import SKLearnModel
 
@@ -43,6 +44,14 @@ candidates = candidates.select('id2', 'id1_list')
 # Read in set P of labeled tuple pairs
 labeled_pairs = spark.read.parquet(str(data_dir / 'labeled_pairs.parquet'))
 
+# check that table_a and table_b have '_id' column and the values are unique
+check_tables(table_a, table_b)
+
+# check that candidates have 'id2' and 'id1_list' columns and the values are valid
+check_candidates(candidates, table_a, table_b)
+
+# check that labeled pairs have 'id2', 'id1_list', and 'label' columns and the values are valid
+check_labeled_data(labeled_pairs, table_a, table_b, 'label')
 
 # Create features
 features = create_features(

@@ -19,6 +19,7 @@ warnings.filterwarnings('ignore')
 from MatchFlow import (
     create_features, featurize, 
     train_matcher, apply_matcher, 
+    check_tables, check_candidates, check_labeled_data
 )
 from MatchFlow import SKLearnModel
 
@@ -32,9 +33,17 @@ candidates = pd.read_parquet('../data/dblp_acm/cand.parquet')
 # we recommend selecting only the id2 and id1_list columns to reduce memory usage.
 candidates = candidates[['id2', 'id1_list']]
 
-
 # Load in the set P of labeled tuple pairs
 labeled_pairs = pd.read_parquet('../data/dblp_acm/labeled_pairs.parquet')
+
+# check that table_a and table_b have '_id' column and the values are unique
+check_tables(table_a, table_b)
+
+# check that candidates have 'id2' and 'id1_list' columns and the values are valid
+check_candidates(candidates, table_a, table_b)
+
+# check that labeled pairs have 'id2', 'id1_list', and 'label' columns and the values are valid
+check_labeled_data(labeled_pairs, table_a, table_b, 'label')
 
 # Create features
 features = create_features(

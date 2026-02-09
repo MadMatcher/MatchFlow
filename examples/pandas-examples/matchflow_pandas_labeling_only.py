@@ -9,13 +9,19 @@ using down_sample(), then asks the user to label only the pairs in the sample.
 import pandas as pd
 import warnings
 # Import MatchFlow functions
-from MatchFlow import CLILabeler, WebUILabeler, save_dataframe, load_dataframe, label_pairs
+from MatchFlow import CLILabeler, WebUILabeler, save_dataframe, load_dataframe, label_pairs, check_tables, check_candidates
 warnings.filterwarnings('ignore')
 
 # Load data
 table_a = pd.read_parquet('../data/dblp_acm/table_a.parquet')
 table_b = pd.read_parquet('../data/dblp_acm/table_b.parquet')
 candidates = pd.read_parquet('../data/dblp_acm/cand.parquet')
+
+# check that table_a and table_b have '_id' column and the values are unique
+check_tables(table_a, table_b)
+
+# check that candidates have 'id2' and 'id1_list' columns and the values are valid
+check_candidates(candidates, table_a, table_b)
 
 # Convert from id2: id1_list to id1: id2 pairs.
 # label_pairs() expects columns named "id1" and "id2", with "id1" as the first (left) column and "id2" as the second.

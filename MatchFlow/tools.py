@@ -21,7 +21,7 @@ import logging
 import sys
 
 from ._internal.ml_model import MLModel, SKLearnModel, SparkMLModel
-from ._internal.utils import get_logger, convert_arrays_for_spark, save_training_data_streaming, load_training_data_streaming
+from ._internal.utils import get_logger, convert_arrays_for_spark, save_training_data_streaming, load_training_data_streaming, check_tables, check_candidates, check_labeled_data, check_gold_data
 from ._internal.labeler import Labeler, CLILabeler, GoldLabeler
 from ._internal.active_learning.ent_active_learner import EntropyActiveLearner
 from ._internal.active_learning.cont_entropy_active_learner import ContinuousEntropyActiveLearner
@@ -51,7 +51,11 @@ __all__ = [
     'save_features',
     'load_features',
     'save_dataframe',
-    'load_dataframe'
+    'load_dataframe',
+    'check_tables',
+    'check_candidates',
+    'check_labeled_data',
+    'check_gold_data'
 ]
 
 

@@ -31,6 +31,14 @@ from .tools import (
     label_pairs
 )
 
+# Validation/checking utilities
+from ._internal.utils import (
+    check_tables,
+    check_candidates,
+    check_labeled_data,
+    check_gold_data
+)
+
 __all__ = [
     # Abstract base classes
     'Tokenizer',
@@ -60,5 +68,11 @@ __all__ = [
     'save_features',
     'load_features',
     'save_dataframe',
-    'load_dataframe'
+    'load_dataframe',
+    
+    # Validation/checking utilities
+    'check_tables',
+    'check_candidates',
+    'check_labeled_data',
+    'check_gold_data'
 ] 

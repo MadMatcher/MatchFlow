@@ -11,7 +11,7 @@ from pyspark.sql import SparkSession
 from pathlib import Path
 import pyspark.sql.functions as F
 # Import MatchFlow functions
-from MatchFlow import WebUILabeler, save_dataframe, load_dataframe, label_pairs
+from MatchFlow import WebUILabeler, save_dataframe, load_dataframe, label_pairs, check_tables, check_candidates
 warnings.filterwarnings('ignore')
 
 spark = SparkSession.builder \
@@ -25,6 +25,12 @@ data_dir = Path(__file__).resolve().parent.parent / 'data' / 'dblp_acm'
 table_a = spark.read.parquet(str(data_dir / 'table_a.parquet'))
 table_b = spark.read.parquet(str(data_dir / 'table_b.parquet'))
 candidates = spark.read.parquet(str(data_dir / 'cand.parquet'))
+
+# check that table_a and table_b have '_id' column and the values are unique
+check_tables(table_a, table_b)
+
+# check that candidates have 'id2' and 'id1_list' columns and the values are valid
+check_candidates(candidates, table_a, table_b)
 
 # Convert from id2: id1_list to id1: id2 pairs.
 # label_pairs() expects columns named "id1" and "id2", with "id1" as the first (left) column and "id2" as the second.

@@ -17,7 +17,8 @@ warnings.filterwarnings('ignore')
 # Import MatchFlow functions
 from MatchFlow import (
    create_features, featurize, down_sample, create_seeds,
-   train_matcher, apply_matcher, label_data
+   train_matcher, apply_matcher, label_data,
+   check_tables, check_candidates, check_gold_data
 )
 from MatchFlow import GoldLabeler, SKLearnModel
 
@@ -41,6 +42,15 @@ candidates = spark.read.parquet(str(data_dir / 'cand.parquet'))
 candidates = candidates.select('id2', 'id1_list')
 
 gold_labels = spark.read.parquet(str(data_dir / 'gold.parquet'))
+
+# check that table_a and table_b have '_id' column and the values are unique
+check_tables(table_a, table_b)
+
+# check that candidates have 'id2' and 'id1_list' columns and the values are valid
+check_candidates(candidates, table_a, table_b)
+
+# check that gold labels have 'id1' and 'id2' columns and the values are valid
+check_gold_data(gold_labels, table_a, table_b)
 
 # create features
 features = create_features(

@@ -51,6 +51,101 @@ You can combine the MatchFlow functions (in a Python script) to create a variety
 
 We provide [Python scripts for several such workflows](https://github.com/MadMatcher/MatchFlow/blob/main/docs/workflow-examples.md). More workflows can be constructed using MatchFlow functions.
 
+### Input Checking in MatchFlow
+
+MatchFlow provides validation functions to verify your input tables meet the schema requirements before running core functions. These functions help catch formatting issues early and provide clear error messages.
+
+There are 4 input checking functions:
+
+- `check_tables` - Validates your base datasets
+- `check_candidates` - Validates candidate pairs for featurization
+- `check_labeled_data` - Validates labeled data for passive learning
+- `check_gold_data` - Validates gold pairs for labeler objects
+
+#### check_tables
+
+Use this function before using any core MatchFlow functions.
+
+```python
+def check_tables(
+    table_a: Union[pd.DataFrame, SparkDataFrame],         # Your first dataset
+    table_b: Union[pd.DataFrame, SparkDataFrame]          # Your second dataset
+)
+```
+
+This function validates the table structure and contents:
+
+1. Verifies that both `table_a` and `table_b` have a column named `_id`
+2. Confirms that `_id` values are unique in both tables
+
+If any validation fails, it raises a ValueError. Otherwise, it logs a confirmation that both tables are correctly formatted.
+
+#### check_candidates
+
+Use this function if you plan to use the `featurize()` function.
+
+```python
+def check_candidates(
+    candidates: Union[pd.DataFrame, SparkDataFrame],      # Which pairs to compare
+    table_a: Union[pd.DataFrame, SparkDataFrame],         # Your first dataset
+    table_b: Union[pd.DataFrame, SparkDataFrame]          # Your second dataset
+)
+```
+
+This function validates the candidates table structure and contents:
+
+1. Verifies that `id2` and `id1_list` exist as columns in `candidates`
+2. Confirms that `id2` values are unique
+3. Confirms that `id1_list` contains lists of IDs
+4. Checks that all `id2` values exist in `table_b`
+5. Checks that all IDs in `id1_list` exist in `table_a`
+
+If any validation fails, it raises a ValueError. Otherwise, it logs a confirmation that the candidates table is correctly formatted.
+
+#### check_labeled_data
+
+Use this function if you plan to use `featurize()` in a passive learning workflow with existing labeled data.
+
+```python
+def check_labeled_data(
+    labeled_data: Union[pd.DataFrame, SparkDataFrame],    # Your labeled data
+    table_a: Union[pd.DataFrame, SparkDataFrame],         # Your first dataset
+    table_b: Union[pd.DataFrame, SparkDataFrame],         # Your second dataset
+    label_column_name: str                                # Name of the column with your labels in labeled_data
+)
+```
+
+This function validates the labeled data structure and contents:
+
+1. Verifies that `id2` and `id1_list` exist as columns in `labeled_data`
+2. Confirms that `id2` values are unique
+3. Confirms that `id1_list` contains lists of IDs
+4. Checks that all `id2` values exist in `table_b`
+5. Checks that all IDs in `id1_list` exist in `table_a`
+6. Validates that `label_column_name` exists in `labeled_data` and contains lists matching the length of corresponding `id1_list` values
+
+If any validation fails, it raises a ValueError. Otherwise, it logs a confirmation that the labeled data is correctly formatted.
+
+#### check_gold_data
+
+Use this function if you plan to use the `GoldLabeler` or `DelayedGoldLabeler` labeler objects.
+
+```python
+def check_gold_data(
+    gold_data: Union[pd.DataFrame, SparkDataFrame],       # Your gold pairs
+    table_a: Union[pd.DataFrame, SparkDataFrame],         # Your first dataset
+    table_b: Union[pd.DataFrame, SparkDataFrame]          # Your second dataset
+)
+```
+
+This function validates the gold data structure and contents:
+
+1. Verifies that `id1` and `id2` exist as columns in `gold_data`
+2. Checks that all `id1` values exist in `table_a`
+3. Checks that all `id2` values exist in `table_b`
+
+If any validation fails, it raises a ValueError. Otherwise, it logs a confirmation that the gold data is correctly formatted.
+
 ### The Core Functions of MatchFlow
 
 We now describe the core functions that you can combine to create a variety of EM workflows.

@@ -15,7 +15,8 @@ warnings.filterwarnings('ignore')
 # Import MatchFlow functions
 from MatchFlow import (
     create_features, featurize, down_sample, create_seeds, 
-    train_matcher, apply_matcher, label_data
+    train_matcher, apply_matcher, label_data,
+    check_tables, check_candidates, check_gold_data
 )
 from MatchFlow import GoldLabeler, SKLearnModel
 
@@ -30,6 +31,18 @@ candidates = pd.read_parquet('../data/dblp_acm/cand.parquet')
 candidates = candidates[['id2', 'id1_list']]
 
 gold_labels = pd.read_parquet('../data/dblp_acm/gold.parquet')
+
+# Validate that table_a and table_b have '_id' columns with unique values
+# This check should be run before any core MatchFlow functions
+check_tables(table_a, table_b)
+
+# Validate that candidates has 'id2' and 'id1_list' columns with valid IDs
+# This check ensures the candidates table is properly formatted for featurization
+check_candidates(candidates, table_a, table_b)
+
+# Validate that gold_labels has 'id1' and 'id2' columns with valid IDs
+# This check ensures the gold data is properly formatted for use with GoldLabeler or DelayedGoldLabeler
+check_gold_data(gold_labels, table_a, table_b)
 
 # Create features
 features = create_features(

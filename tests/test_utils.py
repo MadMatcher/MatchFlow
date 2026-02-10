@@ -376,3 +376,719 @@ class TestConvertArraysForSpark:
         assert result['name'].iloc[0] == 'a'
         assert result['count'].iloc[0] == 5
 
+
+class TestCheckTables:
+    """Tests for check_tables function."""
+
+    def test_check_tables_pandas_valid(self):
+        """Test check_tables with valid pandas DataFrames."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+
+        # Should not raise
+        utils.check_tables(table_a, table_b)
+
+    def test_check_tables_logs_success_on_valid(self, caplog):
+        """Test check_tables logs that formats are correct when validation passes."""
+        import logging
+        caplog.set_level(logging.WARNING)
+        table_a = pd.DataFrame({'_id': [1, 2], 'value': ['a', 'b']})
+        table_b = pd.DataFrame({'_id': [3, 4], 'value': ['c', 'd']})
+        utils.check_tables(table_a, table_b)
+        assert "check_tables" in caplog.text and "formats are correct" in caplog.text
+
+    def test_check_tables_pandas_missing_id_a(self):
+        """Test check_tables raises error when table_a missing '_id'."""
+        table_a = pd.DataFrame({'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        
+        with pytest.raises(ValueError, match="table_a must have the column '_id'"):
+            utils.check_tables(table_a, table_b)
+
+    def test_check_tables_pandas_missing_id_b(self):
+        """Test check_tables raises error when table_b missing '_id'."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'value': ['d', 'e', 'f']})
+        
+        with pytest.raises(ValueError, match="table_b must have the column '_id'"):
+            utils.check_tables(table_a, table_b)
+
+    def test_check_tables_pandas_non_unique_id_a(self):
+        """Test check_tables raises error when table_a '_id' not unique."""
+        table_a = pd.DataFrame({'_id': [1, 2, 2], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        
+        with pytest.raises(ValueError, match="table_a '_id' column must be unique"):
+            utils.check_tables(table_a, table_b)
+
+    def test_check_tables_pandas_non_unique_id_b(self):
+        """Test check_tables raises error when table_b '_id' not unique."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 5], 'value': ['d', 'e', 'f']})
+        
+        with pytest.raises(ValueError, match="table_b '_id' column must be unique"):
+            utils.check_tables(table_a, table_b)
+
+    def test_check_tables_spark_valid(self, spark_session):
+        """Test check_tables with valid Spark DataFrames."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'},
+            {'_id': 3, 'value': 'c'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'},
+            {'_id': 6, 'value': 'f'}
+        ])
+        
+        # Should not raise
+        utils.check_tables(table_a, table_b)
+
+    def test_check_tables_spark_missing_id_a(self, spark_session):
+        """Test check_tables raises error when Spark table_a missing '_id'."""
+        table_a = spark_session.createDataFrame([
+            {'value': 'a'},
+            {'value': 'b'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'}
+        ])
+        
+        with pytest.raises(ValueError, match="table_a must have the column '_id'"):
+            utils.check_tables(table_a, table_b)
+
+    def test_check_tables_spark_missing_id_b(self, spark_session):
+        """Test check_tables raises error when Spark table_b missing '_id'."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'value': 'd'},
+            {'value': 'e'}
+        ])
+        
+        with pytest.raises(ValueError, match="table_b must have the column '_id'"):
+            utils.check_tables(table_a, table_b)
+
+    def test_check_tables_spark_non_unique_id_a(self, spark_session):
+        """Test check_tables raises error when Spark table_a '_id' not unique."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'},
+            {'_id': 2, 'value': 'c'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'}
+        ])
+        
+        with pytest.raises(ValueError, match="table_a '_id' column must be unique"):
+            utils.check_tables(table_a, table_b)
+
+    def test_check_tables_spark_non_unique_id_b(self, spark_session):
+        """Test check_tables raises error when Spark table_b '_id' not unique."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'},
+            {'_id': 5, 'value': 'f'}
+        ])
+        
+        with pytest.raises(ValueError, match="table_b '_id' column must be unique"):
+            utils.check_tables(table_a, table_b)
+
+    def test_check_tables_mixed_types_pandas_spark(self, spark_session):
+        """Test check_tables raises error when mixing pandas and Spark DataFrames."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'}
+        ])
+        
+        with pytest.raises(ValueError, match="table_a and table_b must both be either pandas DataFrames or Spark DataFrames"):
+            utils.check_tables(table_a, table_b)
+
+    def test_check_tables_mixed_types_spark_pandas(self, spark_session):
+        """Test check_tables raises error when mixing Spark and pandas DataFrames."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'}
+        ])
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        
+        with pytest.raises(ValueError, match="table_a and table_b must both be either pandas DataFrames or Spark DataFrames"):
+            utils.check_tables(table_a, table_b)
+
+    def test_check_tables_invalid_type(self):
+        """Test check_tables raises error with non-DataFrame types."""
+        table_a = [1, 2, 3]
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        
+        with pytest.raises(ValueError, match="table_a and table_b must both be either pandas DataFrames or Spark DataFrames"):
+            utils.check_tables(table_a, table_b)
+
+
+class TestCheckCandidates:
+    """Tests for check_candidates function."""
+
+    def test_check_candidates_pandas_valid(self):
+        """Test check_candidates with valid pandas DataFrame."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        candidates = pd.DataFrame({
+            'id2': [4, 5],
+            'id1_list': [[1, 2], [3]]
+        })
+        
+        # Should not raise
+        utils.check_candidates(candidates, table_a, table_b)
+
+    def test_check_candidates_logs_success_on_valid(self, caplog):
+        """Test check_candidates logs that formats are correct when validation passes."""
+        import logging
+        caplog.set_level(logging.WARNING)
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        candidates = pd.DataFrame({'id2': [4, 5], 'id1_list': [[1, 2], [3]]})
+        utils.check_candidates(candidates, table_a, table_b)
+        assert "check_candidates" in caplog.text and "formats are correct" in caplog.text
+
+    def test_check_candidates_pandas_missing_id2(self):
+        """Test check_candidates raises error when missing 'id2' column."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        candidates = pd.DataFrame({
+            'id1_list': [[1, 2], [3]]
+        })
+        
+        with pytest.raises(ValueError, match="candidates must have the column 'id2'"):
+            utils.check_candidates(candidates, table_a, table_b)
+
+    def test_check_candidates_pandas_missing_id1_list(self):
+        """Test check_candidates raises error when missing 'id1_list' column."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        candidates = pd.DataFrame({
+            'id2': [4, 5]
+        })
+        
+        with pytest.raises(ValueError, match="candidates must have the column 'id1_list'"):
+            utils.check_candidates(candidates, table_a, table_b)
+
+    def test_check_candidates_pandas_non_unique_id2(self):
+        """Test check_candidates raises error when 'id2' not unique."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        candidates = pd.DataFrame({
+            'id2': [4, 4],
+            'id1_list': [[1, 2], [3]]
+        })
+        
+        with pytest.raises(ValueError, match="candidates 'id2' column must be unique"):
+            utils.check_candidates(candidates, table_a, table_b)
+
+    def test_check_candidates_pandas_non_list_id1_list(self):
+        """Test check_candidates raises error when 'id1_list' not a list."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        candidates = pd.DataFrame({
+            'id2': [4, 5],
+            'id1_list': ['not a list', [3]]
+        })
+        
+        with pytest.raises(ValueError, match="candidates 'id1_list' column must be a list of ids"):
+            utils.check_candidates(candidates, table_a, table_b)
+
+    def test_check_candidates_pandas_invalid_id1_in_list(self):
+        """Test check_candidates raises error when 'id1_list' contains invalid ids."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        candidates = pd.DataFrame({
+            'id2': [4, 5],
+            'id1_list': [[1, 2], [99]]  # 99 not in table_a
+        })
+        
+        with pytest.raises(ValueError, match="candidates 'id1_list' column must only contain ids that are present in the table_a '_id' column"):
+            utils.check_candidates(candidates, table_a, table_b)
+
+    def test_check_candidates_pandas_invalid_id2(self):
+        """Test check_candidates raises error when 'id2' contains invalid ids."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        candidates = pd.DataFrame({
+            'id2': [99],  # 99 not in table_b
+            'id1_list': [[1, 2]]
+        })
+        
+        with pytest.raises(ValueError, match="candidates 'id2' column must only contain ids that are present in the table_b '_id' column"):
+            utils.check_candidates(candidates, table_a, table_b)
+
+    def test_check_candidates_spark_valid(self, spark_session):
+        """Test check_candidates with valid Spark DataFrame."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'},
+            {'_id': 3, 'value': 'c'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'},
+            {'_id': 6, 'value': 'f'}
+        ])
+        candidates = spark_session.createDataFrame([
+            {'id2': 4, 'id1_list': [1, 2]},
+            {'id2': 5, 'id1_list': [3]}
+        ])
+        
+        # Should not raise
+        utils.check_candidates(candidates, table_a, table_b)
+
+    def test_check_candidates_spark_missing_id2(self, spark_session):
+        """Test check_candidates raises error when Spark DataFrame missing 'id2'."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'}
+        ])
+        candidates = spark_session.createDataFrame([
+            {'id1_list': [1, 2]}
+        ])
+        
+        with pytest.raises(ValueError, match="candidates must have the column 'id2'"):
+            utils.check_candidates(candidates, table_a, table_b)
+
+    def test_check_candidates_spark_missing_id1_list(self, spark_session):
+        """Test check_candidates raises error when Spark DataFrame missing 'id1_list'."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'}
+        ])
+        candidates = spark_session.createDataFrame([
+            {'id2': 4}
+        ])
+        
+        with pytest.raises(ValueError, match="candidates must have the column 'id1_list'"):
+            utils.check_candidates(candidates, table_a, table_b)
+
+    def test_check_candidates_spark_non_unique_id2(self, spark_session):
+        """Test check_candidates raises error when Spark 'id2' not unique."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'}
+        ])
+        candidates = spark_session.createDataFrame([
+            {'id2': 4, 'id1_list': [1, 2]},
+            {'id2': 4, 'id1_list': [3]}
+        ])
+        
+        with pytest.raises(ValueError, match="candidates 'id2' column must be unique"):
+            utils.check_candidates(candidates, table_a, table_b)
+
+    def test_check_candidates_invalid_type(self):
+        """Test check_candidates raises error with non-DataFrame type."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        candidates = [1, 2, 3]
+        
+        with pytest.raises(ValueError, match="candidates must be a pandas DataFrame or Spark DataFrame"):
+            utils.check_candidates(candidates, table_a, table_b)
+
+
+class TestCheckLabeledData:
+    """Tests for check_labeled_data function."""
+
+    def test_check_labeled_data_pandas_valid(self):
+        """Test check_labeled_data with valid pandas DataFrame."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        labeled_data = pd.DataFrame({
+            'id2': [4, 5],
+            'id1_list': [[1, 2], [3]],
+            'labels': [[0.5, 0.6], [0.7]]
+        })
+        
+        # Should not raise
+        utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+    def test_check_labeled_data_logs_success_on_valid(self, caplog):
+        """Test check_labeled_data logs that formats are correct when validation passes."""
+        import logging
+        caplog.set_level(logging.WARNING)
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        labeled_data = pd.DataFrame({
+            'id2': [4, 5],
+            'id1_list': [[1, 2], [3]],
+            'labels': [[0.5, 0.6], [0.7]]
+        })
+        utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+        assert "check_labeled_data" in caplog.text and "formats are correct" in caplog.text
+
+    def test_check_labeled_data_pandas_missing_id2(self):
+        """Test check_labeled_data raises error when missing 'id2' column."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        labeled_data = pd.DataFrame({
+            'id1_list': [[1, 2], [3]],
+            'labels': [[0.5, 0.6], [0.7]]
+        })
+        
+        with pytest.raises(ValueError, match="candidates must have the column 'id2'"):
+            utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+    def test_check_labeled_data_pandas_missing_id1_list(self):
+        """Test check_labeled_data raises error when missing 'id1_list' column."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        labeled_data = pd.DataFrame({
+            'id2': [4, 5],
+            'labels': [[0.5, 0.6], [0.7]]
+        })
+        
+        with pytest.raises(ValueError, match="candidates must have the column 'id1_list'"):
+            utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+    def test_check_labeled_data_pandas_missing_label_column(self):
+        """Test check_labeled_data raises error when missing label column."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        labeled_data = pd.DataFrame({
+            'id2': [4, 5],
+            'id1_list': [[1, 2], [3]]
+        })
+        
+        with pytest.raises(KeyError):
+            utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+    def test_check_labeled_data_pandas_non_unique_id2(self):
+        """Test check_labeled_data raises error when 'id2' not unique."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        labeled_data = pd.DataFrame({
+            'id2': [4, 4],
+            'id1_list': [[1, 2], [3]],
+            'labels': [[0.5, 0.6], [0.7]]
+        })
+        
+        with pytest.raises(ValueError, match="candidates 'id2' column must be unique"):
+            utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+    def test_check_labeled_data_pandas_non_list_id1_list(self):
+        """Test check_labeled_data raises error when 'id1_list' not a list."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        labeled_data = pd.DataFrame({
+            'id2': [4, 5],
+            'id1_list': ['not a list', [3]],
+            'labels': [[0.5, 0.6], [0.7]]
+        })
+        
+        with pytest.raises(ValueError, match="candidates 'id1_list' column must be a list of ids"):
+            utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+    def test_check_labeled_data_pandas_invalid_id1_in_list(self):
+        """Test check_labeled_data raises error when 'id1_list' contains invalid ids."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        labeled_data = pd.DataFrame({
+            'id2': [4, 5],
+            'id1_list': [[1, 2], [99]],  # 99 not in table_a
+            'labels': [[0.5, 0.6], [0.7]]
+        })
+        
+        with pytest.raises(ValueError, match="candidates 'id1_list' column must only contain ids that are present in the table_a '_id' column"):
+            utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+    def test_check_labeled_data_pandas_invalid_id2(self):
+        """Test check_labeled_data raises error when 'id2' contains invalid ids."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        labeled_data = pd.DataFrame({
+            'id2': [99],  # 99 not in table_b
+            'id1_list': [[1, 2]],
+            'labels': [[0.5, 0.6]]
+        })
+        
+        with pytest.raises(ValueError, match="candidates 'id2' column must only contain ids that are present in the table_b '_id' column"):
+            utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+    def test_check_labeled_data_pandas_label_length_mismatch(self):
+        """Test check_labeled_data raises error when label length doesn't match id1_list length."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        labeled_data = pd.DataFrame({
+            'id2': [4, 5],
+            'id1_list': [[1, 2], [3]],
+            'labels': [[0.5], [0.7]]  # First label list has wrong length
+        })
+        
+        with pytest.raises(ValueError, match="labeled_data 'labels' column must be a list the same length as its corresponding 'id1_list' column"):
+            utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+    def test_check_labeled_data_spark_valid(self, spark_session):
+        """Test check_labeled_data with valid Spark DataFrame."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'},
+            {'_id': 3, 'value': 'c'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'},
+            {'_id': 6, 'value': 'f'}
+        ])
+        labeled_data = spark_session.createDataFrame([
+            {'id2': 4, 'id1_list': [1, 2], 'labels': [0.5, 0.6]},
+            {'id2': 5, 'id1_list': [3], 'labels': [0.7]}
+        ])
+        
+        # Should not raise
+        utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+    def test_check_labeled_data_spark_missing_id2(self, spark_session):
+        """Test check_labeled_data raises error when Spark DataFrame missing 'id2'."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'}
+        ])
+        labeled_data = spark_session.createDataFrame([
+            {'id1_list': [1, 2], 'labels': [0.5, 0.6]}
+        ])
+        
+        with pytest.raises(ValueError, match="candidates must have the column 'id2'"):
+            utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+    def test_check_labeled_data_spark_missing_id1_list(self, spark_session):
+        """Test check_labeled_data raises error when Spark DataFrame missing 'id1_list'."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'}
+        ])
+        labeled_data = spark_session.createDataFrame([
+            {'id2': 4, 'labels': [0.5, 0.6]}
+        ])
+        
+        with pytest.raises(ValueError, match="candidates must have the column 'id1_list'"):
+            utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+    def test_check_labeled_data_spark_non_unique_id2(self, spark_session):
+        """Test check_labeled_data raises error when Spark 'id2' not unique."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'}
+        ])
+        labeled_data = spark_session.createDataFrame([
+            {'id2': 4, 'id1_list': [1, 2], 'labels': [0.5, 0.6]},
+            {'id2': 4, 'id1_list': [3], 'labels': [0.7]}
+        ])
+        
+        with pytest.raises(ValueError, match="candidates 'id2' column must be unique"):
+            utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+    def test_check_labeled_data_invalid_type(self):
+        """Test check_labeled_data raises error with non-DataFrame type."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        labeled_data = [1, 2, 3]
+        
+        with pytest.raises(ValueError, match="candidates must be a pandas DataFrame or Spark DataFrame"):
+            utils.check_labeled_data(labeled_data, table_a, table_b, 'labels')
+
+
+class TestCheckGoldData:
+    """Tests for check_gold_data function."""
+
+    def test_check_gold_data_pandas_valid(self):
+        """Test check_gold_data with valid pandas DataFrame."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        gold_data = pd.DataFrame({
+            'id1': [1, 2],
+            'id2': [4, 5]
+        })
+        
+        # Should not raise
+        utils.check_gold_data(gold_data, table_a, table_b)
+
+    def test_check_gold_data_logs_success_on_valid(self, caplog):
+        """Test check_gold_data logs that formats are correct when validation passes."""
+        import logging
+        caplog.set_level(logging.WARNING)
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        gold_data = pd.DataFrame({'id1': [1, 2], 'id2': [4, 5]})
+        utils.check_gold_data(gold_data, table_a, table_b)
+        assert "check_gold_data" in caplog.text and "formats are correct" in caplog.text
+
+    def test_check_gold_data_pandas_missing_id1(self):
+        """Test check_gold_data raises error when missing 'id1' column."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        gold_data = pd.DataFrame({
+            'id2': [4, 5]
+        })
+        
+        with pytest.raises(ValueError, match="gold_data must have the column 'id1'"):
+            utils.check_gold_data(gold_data, table_a, table_b)
+
+    def test_check_gold_data_pandas_missing_id2(self):
+        """Test check_gold_data raises error when missing 'id2' column."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        gold_data = pd.DataFrame({
+            'id1': [1, 2]
+        })
+        
+        with pytest.raises(ValueError, match="gold_data must have the column 'id2'"):
+            utils.check_gold_data(gold_data, table_a, table_b)
+
+    def test_check_gold_data_pandas_invalid_id1(self):
+        """Test check_gold_data raises error when 'id1' contains invalid ids."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        gold_data = pd.DataFrame({
+            'id1': [99],  # 99 not in table_a
+            'id2': [4]
+        })
+        
+        with pytest.raises(ValueError, match="gold_data 'id1' column must only contain ids that are present in the table_a '_id' column"):
+            utils.check_gold_data(gold_data, table_a, table_b)
+
+    def test_check_gold_data_pandas_invalid_id2(self):
+        """Test check_gold_data raises error when 'id2' contains invalid ids."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        gold_data = pd.DataFrame({
+            'id1': [1],
+            'id2': [99]  # 99 not in table_b
+        })
+        
+        with pytest.raises(ValueError, match="gold_data 'id2' column must only contain ids that are present in the table_b '_id' column"):
+            utils.check_gold_data(gold_data, table_a, table_b)
+
+    def test_check_gold_data_spark_valid(self, spark_session):
+        """Test check_gold_data with valid Spark DataFrame."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'},
+            {'_id': 3, 'value': 'c'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'},
+            {'_id': 6, 'value': 'f'}
+        ])
+        gold_data = spark_session.createDataFrame([
+            {'id1': 1, 'id2': 4},
+            {'id1': 2, 'id2': 5}
+        ])
+        
+        # Should not raise
+        utils.check_gold_data(gold_data, table_a, table_b)
+
+    def test_check_gold_data_spark_missing_id1(self, spark_session):
+        """Test check_gold_data raises error when Spark DataFrame missing 'id1'."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'}
+        ])
+        gold_data = spark_session.createDataFrame([
+            {'id2': 4}
+        ])
+        
+        with pytest.raises(ValueError, match="gold_data must have the column 'id1'"):
+            utils.check_gold_data(gold_data, table_a, table_b)
+
+    def test_check_gold_data_spark_missing_id2(self, spark_session):
+        """Test check_gold_data raises error when Spark DataFrame missing 'id2'."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'}
+        ])
+        gold_data = spark_session.createDataFrame([
+            {'id1': 1}
+        ])
+        
+        with pytest.raises(ValueError, match="gold_data must have the column 'id2'"):
+            utils.check_gold_data(gold_data, table_a, table_b)
+
+    def test_check_gold_data_spark_invalid_id1(self, spark_session):
+        """Test check_gold_data raises error when Spark 'id1' contains invalid ids."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'}
+        ])
+        gold_data = spark_session.createDataFrame([
+            {'id1': 99, 'id2': 4}  # 99 not in table_a
+        ])
+        
+        with pytest.raises(ValueError, match="gold_data 'id1' column must only contain ids that are present in the table_a '_id' column"):
+            utils.check_gold_data(gold_data, table_a, table_b)
+
+    def test_check_gold_data_spark_invalid_id2(self, spark_session):
+        """Test check_gold_data raises error when Spark 'id2' contains invalid ids."""
+        table_a = spark_session.createDataFrame([
+            {'_id': 1, 'value': 'a'},
+            {'_id': 2, 'value': 'b'}
+        ])
+        table_b = spark_session.createDataFrame([
+            {'_id': 4, 'value': 'd'},
+            {'_id': 5, 'value': 'e'}
+        ])
+        gold_data = spark_session.createDataFrame([
+            {'id1': 1, 'id2': 99}  # 99 not in table_b
+        ])
+        
+        with pytest.raises(ValueError, match="gold_data 'id2' column must only contain ids that are present in the table_b '_id' column"):
+            utils.check_gold_data(gold_data, table_a, table_b)
+
+    def test_check_gold_data_invalid_type(self):
+        """Test check_gold_data raises error with non-DataFrame type."""
+        table_a = pd.DataFrame({'_id': [1, 2, 3], 'value': ['a', 'b', 'c']})
+        table_b = pd.DataFrame({'_id': [4, 5, 6], 'value': ['d', 'e', 'f']})
+        gold_data = [1, 2, 3]
+        
+        with pytest.raises(ValueError, match="gold_data must be a pandas DataFrame or Spark DataFrame"):
+            utils.check_gold_data(gold_data, table_a, table_b)
+

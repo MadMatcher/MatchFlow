@@ -6,6 +6,8 @@ import numpy as np
 import numba as nb
 from contextlib import contextmanager
 from pyspark import StorageLevel
+from pyspark.sql import DataFrame as SparkDataFrame
+from pyspark.sql.functions import col, explode, size
 from random import randint
 import mmh3
 import sys
@@ -13,6 +15,7 @@ import logging
 import pickle
 import pyarrow as pa
 import pyarrow.parquet as pq
+from typing import Union
 from pathlib import Path
 import os
 from math import floor
@@ -408,3 +411,218 @@ def convert_arrays_for_spark(df):
                 )
 
     return df
+
+
+def check_tables(table_a: Union[pd.DataFrame, SparkDataFrame], table_b: Union[pd.DataFrame, SparkDataFrame]):
+    """
+    Check that both table_a and table_b have the column '_id'.
+    Check that both id columns are unique.
+    """
+    logger = logging.getLogger(__name__)
+
+    if isinstance(table_a, pd.DataFrame):
+        if isinstance(table_b, pd.DataFrame):
+            if '_id' not in table_a.columns:
+                raise ValueError(f"table_a must have the column '_id'.  Available columns: {table_a.columns}")
+            if '_id' not in table_b.columns:
+                raise ValueError(f"table_b must have the column '_id'.  Available columns: {table_b.columns}")
+            if table_a['_id'].nunique() != len(table_a):
+                raise ValueError(f"table_a '_id' column must be unique.")
+            if table_b['_id'].nunique() != len(table_b):
+                raise ValueError(f"table_b '_id' column must be unique.")
+        else:
+            raise ValueError("table_a and table_b must both be either pandas DataFrames or Spark DataFrames")
+    elif isinstance(table_a, SparkDataFrame):
+        if isinstance(table_b, SparkDataFrame):
+            if '_id' not in table_a.columns:
+                raise ValueError(f"table_a must have the column '_id'.  Available columns: {table_a.columns}")
+            if '_id' not in table_b.columns:
+                raise ValueError(f"table_b must have the column '_id'.  Available columns: {table_b.columns}")
+            if table_a.select('_id').distinct().count() != table_a.count():
+                raise ValueError("table_a '_id' column must be unique")
+            if table_b.select('_id').distinct().count() != table_b.count():
+                raise ValueError("table_b '_id' column must be unique")
+        else:
+            raise ValueError("table_a and table_b must both be either pandas DataFrames or Spark DataFrames")
+    else:
+        raise ValueError("table_a and table_b must both be either pandas DataFrames or Spark DataFrames")
+
+    logger.warning("check_tables: table_a and table_b formats are correct")
+    
+
+def check_candidates(candidates, table_a, table_b):
+    """
+    Check that the candidates have the column 'id2' and 'id1_list'.
+    Check that the id2 column is unique.
+    Check that the id1_list column is a list of ids.
+    Check that the ids in the id1_list column are present in the table_a id column.
+    Check that the ids in the id2 column are present in the table_b id column.
+    """
+    logger = logging.getLogger(__name__)
+
+    if isinstance(candidates, pd.DataFrame):
+        if 'id2' not in candidates.columns:
+            raise ValueError(f"candidates must have the column 'id2'.  Available columns: {candidates.columns}")
+        if 'id1_list' not in candidates.columns:
+            raise ValueError(f"candidates must have the column 'id1_list'.  Available columns: {candidates.columns}")
+        if candidates['id2'].nunique() != len(candidates):
+            raise ValueError("candidates 'id2' column must be unique")
+        if not candidates['id1_list'].apply(lambda x: isinstance(x, (list, np.ndarray))).all():
+            raise ValueError("candidates 'id1_list' column must be a list of ids")
+        if not candidates['id1_list'].apply(lambda x: all(i in table_a['_id'].tolist() for i in x)).all():
+            raise ValueError("candidates 'id1_list' column must only contain ids that are present in the table_a '_id' column")
+        if not candidates['id2'].apply(lambda x: x in table_b['_id'].tolist()).all():
+            raise ValueError("candidates 'id2' column must only contain ids that are present in the table_b '_id' column")
+    elif isinstance(candidates, SparkDataFrame):
+        if 'id2' not in candidates.columns:
+            raise ValueError(f"candidates must have the column 'id2'.  Available columns: {candidates.columns}")
+        if 'id1_list' not in candidates.columns:
+            raise ValueError(f"candidates must have the column 'id1_list'.  Available columns: {candidates.columns}")
+        if candidates.select('id2').distinct().count() != candidates.count():
+            raise ValueError("candidates 'id2' column must be unique")
+        
+        # Check that id1_list is an array type
+        id1_list_schema = dict(candidates.dtypes)['id1_list']
+        if not id1_list_schema.startswith('array'):
+            raise ValueError("candidates 'id1_list' column must be a list of ids")
+        
+        # Check id2 validity using anti-join
+        table_b_ids_df = table_b.select('_id').distinct().withColumnRenamed('_id', 'id2')
+        invalid_id2 = candidates.join(
+            table_b_ids_df, on='id2', how='left_anti'
+        )
+        if invalid_id2.count() > 0:
+            raise ValueError("candidates 'id2' column must only contain ids that are present in the table_b '_id' column")
+        
+        # Check id1_list validity by exploding and joining
+        table_a_ids_df = table_a.select('_id').distinct().withColumnRenamed('_id', 'id1')
+        candidates_exploded = candidates.select(
+            col('id2'),
+            explode(col('id1_list')).alias('id1')
+        )
+        invalid_id1 = candidates_exploded.join(
+            table_a_ids_df, on='id1', how='left_anti'
+        )
+        if invalid_id1.count() > 0:
+            raise ValueError("candidates 'id1_list' column must only contain ids that are present in the table_a '_id' column")
+    else:
+        raise ValueError("candidates must be a pandas DataFrame or Spark DataFrame")
+
+    logger.warning("check_candidates: candidates formats are correct")
+
+
+def check_labeled_data(labeled_data, table_a, table_b, label_column_name):
+    """
+    Check that the labeled_data have the column 'id2', 'id1_list', and label_column_name.
+    Check that the label_column_name column is a list of floats.
+    Check that the id2 column is unique.
+    Check that the id1_list column is a list of ids.
+    Check that the ids in the id1_list column are present in the table_a id column.
+    Check that the ids in the id2 column are present in the table_b id column.
+    Check that the label_column list is the same length as the id1_list column.
+    """
+    logger = logging.getLogger(__name__)
+
+    if isinstance(labeled_data, pd.DataFrame):
+        if 'id2' not in labeled_data.columns:
+            raise ValueError(f"candidates must have the column 'id2'.  Available columns: {labeled_data.columns}")
+        if 'id1_list' not in labeled_data.columns:
+            raise ValueError(f"candidates must have the column 'id1_list'.  Available columns: {labeled_data.columns}")
+        if labeled_data['id2'].nunique() != len(labeled_data):
+            raise ValueError("candidates 'id2' column must be unique")
+        if not labeled_data['id1_list'].apply(lambda x: isinstance(x, (list, np.ndarray))).all():
+            raise ValueError("candidates 'id1_list' column must be a list of ids")
+        if not labeled_data['id1_list'].apply(lambda x: all(i in table_a['_id'].tolist() for i in x)).all():
+            raise ValueError("candidates 'id1_list' column must only contain ids that are present in the table_a '_id' column")
+        if not labeled_data['id2'].apply(lambda x: x in table_b['_id'].tolist()).all():
+            raise ValueError("candidates 'id2' column must only contain ids that are present in the table_b '_id' column")
+        if not labeled_data.apply(lambda row: len(row[label_column_name]) == len(row['id1_list']), axis=1).all():
+            raise ValueError(f"labeled_data '{label_column_name}' column must be a list the same length as its corresponding 'id1_list' column")
+    elif isinstance(labeled_data, SparkDataFrame):
+        if 'id2' not in labeled_data.columns:
+            raise ValueError(f"candidates must have the column 'id2'.  Available columns: {labeled_data.columns}")
+        if 'id1_list' not in labeled_data.columns:
+            raise ValueError(f"candidates must have the column 'id1_list'.  Available columns: {labeled_data.columns}")
+        if label_column_name not in labeled_data.columns:
+            raise ValueError(f"labeled_data must have the column '{label_column_name}'.  Available columns: {labeled_data.columns}")
+        if labeled_data.select('id2').distinct().count() != labeled_data.count():
+            raise ValueError("candidates 'id2' column must be unique")
+        
+        # Check that id1_list is an array type
+        id1_list_schema = dict(labeled_data.dtypes)['id1_list']
+        if not id1_list_schema.startswith('array'):
+            raise ValueError("candidates 'id1_list' column must be a list of ids")
+        
+        # Check id2 validity using anti-join
+        table_b_ids_df = table_b.select('_id').distinct().withColumnRenamed('_id', 'id2')
+        invalid_id2 = labeled_data.join(
+            table_b_ids_df, on='id2', how='left_anti'
+        )
+        if invalid_id2.count() > 0:
+            raise ValueError("candidates 'id2' column must only contain ids that are present in the table_b '_id' column")
+        
+        # Check id1_list validity by exploding and joining
+        table_a_ids_df = table_a.select('_id').distinct().withColumnRenamed('_id', 'id1')
+        labeled_exploded = labeled_data.select(
+            col('id2'),
+            explode(col('id1_list')).alias('id1')
+        )
+        invalid_id1 = labeled_exploded.join(
+            table_a_ids_df, on='id1', how='left_anti'
+        )
+        if invalid_id1.count() > 0:
+            raise ValueError("candidates 'id1_list' column must only contain ids that are present in the table_a '_id' column")
+        
+        # Check label column length matches id1_list length using Spark SQL
+        invalid_length = labeled_data.filter(
+            size(col(label_column_name)) != size(col('id1_list'))
+        )
+        if invalid_length.count() > 0:
+            raise ValueError(f"labeled_data '{label_column_name}' column must be a list the same length as its corresponding 'id1_list' column")
+    else:
+        raise ValueError("candidates must be a pandas DataFrame or Spark DataFrame")
+
+    logger.warning("check_labeled_data: labeled_data formats are correct")
+
+def check_gold_data(gold_data, table_a, table_b):
+    """
+    Gold data must have the columns 'id1' and 'id2'.
+    Check that the ids in the id1 column are present in the table_a '_id' column.
+    Check that the ids in the id2 column are present in the table_b '_id' column.
+    """
+    logger = logging.getLogger(__name__)
+
+    if isinstance(gold_data, pd.DataFrame):
+        if 'id1' not in gold_data.columns:
+            raise ValueError(f"gold_data must have the column 'id1'.  Available columns: {gold_data.columns}")
+        if 'id2' not in gold_data.columns:
+            raise ValueError(f"gold_data must have the column 'id2'.  Available columns: {gold_data.columns}")
+        if not gold_data['id1'].apply(lambda x: x in table_a['_id'].tolist()).all():
+            raise ValueError("gold_data 'id1' column must only contain ids that are present in the table_a '_id' column")
+        if not gold_data['id2'].apply(lambda x: x in table_b['_id'].tolist()).all():
+            raise ValueError("gold_data 'id2' column must only contain ids that are present in the table_b '_id' column")
+    elif isinstance(gold_data, SparkDataFrame):
+        if 'id1' not in gold_data.columns:
+            raise ValueError(f"gold_data must have the column 'id1'.  Available columns: {gold_data.columns}")
+        if 'id2' not in gold_data.columns:
+            raise ValueError(f"gold_data must have the column 'id2'.  Available columns: {gold_data.columns}")
+        
+        # Check id1 validity
+        table_a_ids_df = table_a.select('_id').distinct().withColumnRenamed('_id', 'id1')
+        invalid_id1 = gold_data.join(
+            table_a_ids_df, on='id1', how='left_anti'
+        )
+        if invalid_id1.count() > 0:
+            raise ValueError("gold_data 'id1' column must only contain ids that are present in the table_a '_id' column")
+        
+        # Check id2 validity
+        table_b_ids_df = table_b.select('_id').distinct().withColumnRenamed('_id', 'id2')
+        invalid_id2 = gold_data.join(
+            table_b_ids_df, on='id2', how='left_anti'
+        )
+        if invalid_id2.count() > 0:
+            raise ValueError("gold_data 'id2' column must only contain ids that are present in the table_b '_id' column")
+    else:
+        raise ValueError("gold_data must be a pandas DataFrame or Spark DataFrame")
+
+    logger.warning("check_gold_data: gold_data formats are correct")

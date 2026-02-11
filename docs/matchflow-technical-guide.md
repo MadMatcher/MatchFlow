@@ -80,8 +80,6 @@ If any validation fails, it raises a ValueError.  Otherwise, it displays (and ca
 
 #### check_candidates
 
-Use this function if you plan to use the `featurize()` function.
-
 ```python
 def check_candidates(
     candidates: Union[pd.DataFrame, SparkDataFrame],      # Which pairs to compare

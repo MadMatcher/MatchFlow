@@ -1,6 +1,6 @@
 ## How to Install MatchFlow on a Cluster of Machines
 
-Here we provide instructions for installing MatchFlow on a cluster of machines on the cloud, specifically on Amazon Web Services (AWS). You can adapt this guide to install MatchFlow on a cluster of local machines. We have tested these installation instructions only with Ubuntu 22.04, Java Temurin JDK 17, Python 3.12, and Spark 3.5.6. Once MatchFlow has been installed, you can run it using Spark on a cluster of machines.
+Here we provide instructions for installing MatchFlow on a cluster of machines on the cloud, specifically on Amazon Web Services (AWS). You can adapt this guide to install MatchFlow on a cluster of local machines. We have tested these installation instructions only with Ubuntu 22.04, Java Temurin JDK 17, Python 3.12, and Spark 3.5.5. Once MatchFlow has been installed, you can run it using Spark on a cluster of machines.
 
 ### Creating EC2 Nodes
 
@@ -38,12 +38,12 @@ Next you need to install Spark. Spark must be installed on every node in order t
 
 You can use these commands to download and unpack Spark:
 
-    wget "https://dlcdn.apache.org/spark/spark-3.5.6/spark-3.5.6-bin-hadoop3.tgz"
-    tar -xvf spark-3.5.6-bin-hadoop3.tgz
+    wget "https://archive.apache.org/dist/spark/spark-3.5.5/spark-3.5.5-bin-hadoop3.tgz"
+    tar -xvf spark-3.5.5-bin-hadoop3.tgz
 
-Running these commands will create a folder called ‘spark-3.5.6-bin-hadoop3’. This contains everything you need to create a Spark node. You should rename this as the default name is rather unwieldy:
+Running these commands will create a folder called ‘spark-3.5.5-bin-hadoop3’. This contains everything you need to create a Spark node. You should rename this as the default name is rather unwieldy:
 
-    mv spark-3.5.6-bin-hadoop3 spark
+    mv spark-3.5.5-bin-hadoop3 spark
 
 This guide will assume that you renamed the Spark folder to ‘spark’, but you can use a different name if you wish.
 

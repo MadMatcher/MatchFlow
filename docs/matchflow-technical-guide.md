@@ -53,18 +53,16 @@ We provide [Python scripts for several such workflows](https://github.com/MadMat
 
 ### Input Checking in MatchFlow
 
-MatchFlow provides validation functions to verify your input tables meet the schema requirements before running core functions. These functions help catch formatting issues early and provide clear error messages.
+MatchFlow provides functions to verify that your input tables are in the required formats. You should call these functions after you have read the input tables into DataFrames, but before calling any other functions. This ensures that the remaining functions of MatchFlow will work correctly on the input tables. 
 
-There are 4 input checking functions:
+There are four input checking functions:
 
-- `check_tables` - Validates your base datasets
-- `check_candidates` - Validates candidate pairs for featurization
-- `check_labeled_data` - Validates labeled data for passive learning
-- `check_gold_data` - Validates gold pairs for labeler objects
+- `check_tables` - Check the two tables to be matched, that is, Tables A and B.
+- `check_candidates` - Check the format of the set of candidate tuple pairs.
+- `check_labeled_data` - Check the format of the labeled data (used to train a matcher).
+- `check_gold_data` - Check the format of the gold matches.
 
 #### check_tables
-
-Use this function before using any core MatchFlow functions.
 
 ```python
 def check_tables(
@@ -73,12 +71,12 @@ def check_tables(
 )
 ```
 
-This function validates the table structure and contents:
+This function:
 
 1. Verifies that both `table_a` and `table_b` have a column named `_id`
-2. Confirms that `_id` values are unique in both tables
+2. Confirms that `_id` values exist for all rows and are unique in both tables
 
-If any validation fails, it raises a ValueError. Otherwise, it logs a confirmation that both tables are correctly formatted.
+If any validation fails, it raises a ValueError.  Otherwise, it displays (and can log) a confirmation that both tables are correctly formatted.
 
 #### check_candidates
 
@@ -92,19 +90,17 @@ def check_candidates(
 )
 ```
 
-This function validates the candidates table structure and contents:
+This function:
 
 1. Verifies that `id2` and `id1_list` exist as columns in `candidates`
-2. Confirms that `id2` values are unique
+2. Confirms that `id2` values exist for all rows and are unique
 3. Confirms that `id1_list` contains lists of IDs
 4. Checks that all `id2` values exist in `table_b`
 5. Checks that all IDs in `id1_list` exist in `table_a`
 
-If any validation fails, it raises a ValueError. Otherwise, it logs a confirmation that the candidates table is correctly formatted.
+If any validation fails, it raises a ValueError. Otherwise, it displays (and can log) a confirmation that both tables are correctly formatted.
 
 #### check_labeled_data
-
-Use this function if you plan to use `featurize()` in a passive learning workflow with existing labeled data.
 
 ```python
 def check_labeled_data(
@@ -115,20 +111,18 @@ def check_labeled_data(
 )
 ```
 
-This function validates the labeled data structure and contents:
+This function:
 
 1. Verifies that `id2` and `id1_list` exist as columns in `labeled_data`
-2. Confirms that `id2` values are unique
+2. Confirms that `id2` values exist for all rows and are unique
 3. Confirms that `id1_list` contains lists of IDs
 4. Checks that all `id2` values exist in `table_b`
 5. Checks that all IDs in `id1_list` exist in `table_a`
 6. Validates that `label_column_name` exists in `labeled_data` and contains lists matching the length of corresponding `id1_list` values
 
-If any validation fails, it raises a ValueError. Otherwise, it logs a confirmation that the labeled data is correctly formatted.
+If any validation fails, it raises a ValueError. Otherwise, it displays (and can log) a confirmation that both tables are correctly formatted.
 
 #### check_gold_data
-
-Use this function if you plan to use the `GoldLabeler` or `DelayedGoldLabeler` labeler objects.
 
 ```python
 def check_gold_data(
@@ -138,13 +132,13 @@ def check_gold_data(
 )
 ```
 
-This function validates the gold data structure and contents:
+This function:
 
 1. Verifies that `id1` and `id2` exist as columns in `gold_data`
 2. Checks that all `id1` values exist in `table_a`
 3. Checks that all `id2` values exist in `table_b`
 
-If any validation fails, it raises a ValueError. Otherwise, it logs a confirmation that the gold data is correctly formatted.
+If any validation fails, it raises a ValueError. Otherwise, it displays (and can log) a confirmation that both tables are correctly formatted.
 
 ### The Core Functions of MatchFlow
 

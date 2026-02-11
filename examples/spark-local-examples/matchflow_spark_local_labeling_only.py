@@ -24,9 +24,14 @@ table_a = spark.read.parquet('../data/dblp_acm/table_a.parquet')
 table_b = spark.read.parquet('../data/dblp_acm/table_b.parquet')
 candidates = spark.read.parquet('../data/dblp_acm/cand.parquet')
 
-# check that table_a and table_b have '_id' column and the values are unique
-check_tables(table_a, table_b)
-
+# Validate that both table_a and table_b contain a column named '_id',
+# and that this column is non-null and unique within each table.
+# This check must be performed before invoking any core MatchFlow functions.
+try:
+    check_tables(table_a, table_b)
+except ValueError as e:
+    print(e)
+    exit(1)
 
 # Convert from id2: id1_list to id1: id2 pairs.
 # label_pairs() expects columns named "id1" and "id2", with "id1" as the first (left) column and "id2" as the second.

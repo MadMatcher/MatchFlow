@@ -36,17 +36,30 @@ candidates = candidates[['id2', 'id1_list']]
 # Load in the set P of labeled tuple pairs
 labeled_pairs = pd.read_parquet('../data/dblp_acm/labeled_pairs.parquet')
 
-# Validate that table_a and table_b have '_id' columns with unique values
-# This check should be run before any core MatchFlow functions
-check_tables(table_a, table_b)
+# Validate that both table_a and table_b contain a column named '_id',
+# and that this column is non-null and unique within each table.
+# This check must be performed before invoking any core MatchFlow functions.
+try:
+    check_tables(table_a, table_b)
+except ValueError as e:
+    print(e)
+    exit(1)
 
 # Validate that candidates has 'id2' and 'id1_list' columns with valid IDs
 # This check ensures the candidates table is properly formatted for featurization
-check_candidates(candidates, table_a, table_b)
+try:
+    check_candidates(candidates, table_a, table_b)
+except ValueError as e:
+    print(e)
+    exit(1)
 
 # Validate that labeled_pairs has the required columns and structure for passive learning
 # This check verifies 'id2', 'id1_list', and 'label' columns exist and are in the correct format
-check_labeled_data(labeled_pairs, table_a, table_b, 'label')
+try:
+    check_labeled_data(labeled_pairs, table_a, table_b, 'label')
+except ValueError as e:
+    print(e)
+    exit(1)
 
 # Create features
 features = create_features(

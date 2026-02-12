@@ -2,7 +2,7 @@
 
 This is a step-by-step guide to install MatchFlow and its necessary dependencies on a single Windows machine.
 
-This guide has been tested only on a Dell Latitude 3340 with x86-64 bit architecture, running Windows 11 Home Edition, and having 16 GB of RAM. The test setup used WSL 2 (Ubuntu) and installed Python 3.10, the g++ compiler, Eclipse Temurin JDK 17, and PyLucene 9.4.1.
+This guide has been tested only on a Dell Latitude 3340 with x86-64 bit architecture, running Windows 11 Home Edition, and having 16 GB of RAM. The test setup used WSL 2 (Ubuntu) and installed Python 3.12 and Eclipse Temurin JDK 17.
 
 If you’re running a 64-bit version of Windows (Windows 10, Windows 11, or Windows Server) but your system specifications differ from the test machine, these steps may still work. However, we have not validated them on other configurations and cannot guarantee compatibility.
 

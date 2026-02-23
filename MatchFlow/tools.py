@@ -217,12 +217,12 @@ def create_seeds(
             raise ValueError("number of seeds would exceed the size of the fvs DataFrame")
         # lowest scoring vectors
         maybe_neg = fvs.sort(score_column, ascending=True)\
-                        .limit(fvs_length//2)\
+                        .limit(nseeds)\
                         .toPandas()\
                         .iterrows()
         # highest scoring vectors
         maybe_pos = fvs.sort(score_column, ascending=False)\
-                        .limit(fvs_length//2)\
+                        .limit(min(nseeds)\
                         .toPandas()\
                         .iterrows()
     i = 0

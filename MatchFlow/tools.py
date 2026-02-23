@@ -222,7 +222,7 @@ def create_seeds(
                         .iterrows()
         # highest scoring vectors
         maybe_pos = fvs.sort(score_column, ascending=False)\
-                        .limit(min(nseeds)\
+                        .limit(nseeds)\
                         .toPandas()\
                         .iterrows()
     i = 0

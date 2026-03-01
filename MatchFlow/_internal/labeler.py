@@ -40,6 +40,10 @@ class Labeler(ABC):
         """
         pass
 
+    def finish(self, n_labeled: int, stopped: bool = False):
+        """Called by label_pairs when labeling is complete."""
+        pass
+
 
 class GoldLabeler(Labeler):
     """
@@ -304,6 +308,13 @@ class CLILabeler(Labeler):
                 raise KeyError(f"No row with {self._id_col}={row_id}")
             return rows[0].asDict()
 
+    def finish(self, n_labeled: int, stopped: bool = False):
+        print()
+        if stopped:
+            print(f"Labeling stopped. {n_labeled} pair(s) labeled.")
+        else:
+            print(f"Labeling complete. {n_labeled} pair(s) labeled.")
+
     @staticmethod
     def _print_dict(d):
         """Tabulate the key/value pairs of a dict."""
@@ -398,6 +409,9 @@ class WebUILabeler(Labeler):
         self._flask_thread = None
         self._streamlit_proc = None
         self._server_started = False
+        self._done = False
+        self._done_stopped = False
+        self._n_labeled = 0
         # Do NOT start servers here
 
     def _setup_flask_routes(self):
@@ -430,6 +444,15 @@ class WebUILabeler(Labeler):
                 # Also update the memory version for immediate use
                 self._current_fields_mem = self._current_fields
             return jsonify({'status': 'ok'})
+
+        @self._flask_app.route('/done', methods=['GET'])
+        def done():
+            with self._lock:
+                return jsonify({
+                    'done': self._done,
+                    'stopped': self._done_stopped,
+                    'n_labeled': self._n_labeled,
+                })
 
     def _ensure_server_started(self):
         if not self._server_started:
@@ -482,6 +505,18 @@ class WebUILabeler(Labeler):
             self._label = None
         return label
 
+    def finish(self, n_labeled: int, stopped: bool = False):
+        with self._lock:
+            self._done = True
+            self._done_stopped = stopped
+            self._n_labeled = n_labeled
+
+        if self._streamlit_proc is not None:
+            time.sleep(2)
+            self._streamlit_proc.kill()
+            self._streamlit_proc.wait()
+            self._streamlit_proc = None
+
     def _get_row(self, df, row_id):
         """Fetch a single row from a DataFrame as a dict."""
         if isinstance(df, pd.DataFrame):
@@ -490,7 +525,9 @@ class WebUILabeler(Labeler):
                 raise KeyError(f"No row with {self._id_col}={row_id}")
             return rows.iloc[0].to_dict()
         else:  # Spark DataFrame
-            rows = df.filter(col(self._id_col) == row_id).limit(1).collect()
+            rows = df.filter(
+                col(self._id_col) == row_id
+            ).limit(1).collect()
             if not rows:
                 raise KeyError(f"No row with {self._id_col}={row_id}")
             return rows[0].asDict()
@@ -507,7 +544,7 @@ import tempfile
 import textwrap
 import pandas as pd
 
-st.title("Active Matcher Web Labeler")
+st.title("MatchFlow Web Labeler")
 
 FLASK_URL = "http://{self._flask_host}:{self._flask_port}"
 
@@ -516,6 +553,20 @@ if 'last_pair' not in st.session_state:
 
 if 'selected_fields' not in st.session_state:
     st.session_state['selected_fields'] = {column_order}
+
+try:
+    done_resp = requests.get(FLASK_URL + '/done', timeout=5)
+    if done_resp.status_code == 200:
+        done_data = done_resp.json()
+        if done_data.get('done', False):
+            n = done_data.get('n_labeled', 0)
+            if done_data.get('stopped', False):
+                st.info(f"Labeling stopped. {{n}} pair(s) labeled.")
+            else:
+                st.success(f"Labeling complete! {{n}} pair(s) labeled.")
+            st.stop()
+except Exception:
+    pass
 
 if st.session_state.get('stopped', False):
     st.write("Labeling stopped.")

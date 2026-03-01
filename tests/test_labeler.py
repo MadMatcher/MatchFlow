@@ -328,6 +328,7 @@ class TestWebUILabeler:
         assert '/get_pair' in routes
         assert '/submit_label' in routes
         assert '/update_fields' in routes
+        assert '/done' in routes
 
     def test_webui_labeler_get_pair_route_waiting(
         self, spark_session, a_df, b_df
@@ -399,6 +400,26 @@ class TestWebUILabeler:
                 assert labeler._current_fields == set(new_fields)
                 assert labeler._current_fields_mem == set(new_fields)
 
+    def test_webui_labeler_done_route(self, spark_session, a_df, b_df):
+        """Test WebUILabeler /done route before and after finish()."""
+        labeler = WebUILabeler(a_df, b_df)
+
+        with labeler._flask_app.test_client() as client:
+            response = client.get('/done')
+            assert response.status_code == 200
+            data = response.get_json()
+            assert data['done'] is False
+
+            labeler._done = True
+            labeler._done_stopped = False
+            labeler._n_labeled = 7
+
+            response = client.get('/done')
+            data = response.get_json()
+            assert data['done'] is True
+            assert data['stopped'] is False
+            assert data['n_labeled'] == 7
+
     def test_webui_labeler_streamlit_app_code(self, spark_session, a_df, b_df):
         """Test WebUILabeler _streamlit_app_code generation."""
         labeler = WebUILabeler(a_df, b_df)
@@ -410,7 +431,7 @@ class TestWebUILabeler:
         assert 'FLASK_URL' in app_code
         assert str(labeler._flask_host) in app_code
         assert str(labeler._flask_port) in app_code
-        assert 'Active Matcher Web Labeler' in app_code
+        assert 'MatchFlow Web Labeler' in app_code
 
     @patch.object(WebUILabeler, '_ensure_server_started')
     def test_webui_labeler_call(

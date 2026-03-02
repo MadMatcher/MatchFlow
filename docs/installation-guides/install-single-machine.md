@@ -6,4 +6,4 @@ We currently offer the following ways to install MatchFlow on a single machine. 
 
 - [Installing on Linux](./install-linux-single-machine.md).
 - [Installing on MacOS](./install-macOS-single-machine.md).
-- - [Installing on MacOS](./install-windowsOS-single-machine.md).
+- [Installing on MacOS](./install-windowsOS-single-machine.md).

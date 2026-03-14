@@ -130,9 +130,9 @@ class EntropyActiveLearner:
                 save_training_data_streaming(self.local_training_fvs_, self._parquet_file_path, log)
             
             # Calculate adjusted iterations based on existing data
-            max_itr = adjust_iterations_for_existing_data(
-                len(self.local_training_fvs_), n_fvs, self._batch_size, self._max_iter)
-            
+            #max_itr = adjust_iterations_for_existing_data(
+            #    len(self.local_training_fvs_), n_fvs, self._batch_size, self._max_iter)
+            max_itr = self._max_iter
             # just label everything and return 
             if n_fvs <= len(self.local_training_fvs_) + (self._batch_size * max_itr):
                 if self._terminate_if_label_everything:

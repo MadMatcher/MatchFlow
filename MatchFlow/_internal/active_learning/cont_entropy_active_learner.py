@@ -139,8 +139,9 @@ class ContinuousEntropyActiveLearner:
             log.info(f'Using {len(seeds)} existing labeled examples')
             
         if not self._on_demand_stop:
-            remaining_examples = adjust_labeled_examples_for_existing_data(
-                len(seeds), self._max_labeled)
+            #remaining_examples = adjust_labeled_examples_for_existing_data(
+            #    len(seeds), self._max_labeled)
+            remaining_examples = self._max_labeled
             log.info(f'Remaining examples to label: {remaining_examples}')
 
         training_thread = Thread(target=self._training_loop, args=(to_be_label_queue, labeled_queue, stop_training, fvs, seeds))

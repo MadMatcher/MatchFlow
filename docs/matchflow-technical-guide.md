@@ -392,11 +392,12 @@ As discussed earlier, if the candidates set (the output of blocking) is large (e
 
 **How It Works:** This function works as follows:
 
-1. Scans through all rows in 'fvs' and assigns the rows into a set of buckets, using a hash function on the values of 'search_id_column'. It ensures that the size of each bucket never exceeds 'bucket_size'.
-2. For each bucket of size _n_, the function first sorts the rows in that bucket in decreasing order of score in 'score*column', then takes the top \_n x 'percent'* rows in that order.
-3. The function returns the union of all the rows taken from the buckets to be the desired sample.
+1. Scans through all rows in 'fvs' and assigns the rows into a set of buckets, using a hash function on the values of 'search_id_column'. The number of buckets depends on how many rows are in 'fvs' and 'bucket_size'.
+2. Within each bucket, rows are ranked by their score in 'score_column' (highest first). Rows that rank in the top 'percent' of their bucket are flagged as likely samples.
+3. Within each group of flagged and non-flagged rows per bucket, the function randomly selects up to a capped number of rows. This cap is computed from 'percent' and the number of buckets, ensuring the final sample is close to the desired size.
+4. The function returns the union of all selected rows as the desired sample.
 
-Intuitively, the sample contains the top-scoring rows of each bucket. The top-scoring rows are likely to contain matches, and so the sample is likely to contain a reasonable number of matches. The above function may perform Steps 1-3 using Spark to save time.
+Intuitively, the sample draws from both high-scoring rows (likely matches) and lower-scoring rows within each bucket. This ensures the sample contains a reasonable number of matches while also including non-matches, which is important for effective downstream training. The above function may perform Steps 1-4 using Spark to save time.
 
 **Example:** The following code returns 10% of 'feature_vectors' as the sample:
 
@@ -406,7 +407,7 @@ sampled_data = down_sample(
     percent=0.1,                    # Keep 10% of data
     search_id_column='pair_id',     # Your unique pair identifier
     score_column='similarity',      # Your similarity score column
-    bucket_size=500                 # The number of records in each bucket
+    bucket_size=1000                # The number of records in each bucket (must be >= 1000)
 )
 ```
 

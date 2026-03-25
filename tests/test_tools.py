@@ -32,7 +32,11 @@ class TestDownSample:
         assert '_id' in result.columns
         assert 'score' in result.columns
         assert 'value' in result.columns
-        assert result['score'].min() >= df['score'].quantile(0.5)
+        # No temp columns should leak through
+        assert '_HASH' not in result.columns
+        assert '_PERCENTILE' not in result.columns
+        assert '_SAMPLE' not in result.columns
+        assert '_ROW_NUM' not in result.columns
 
     def test_down_sample_pandas_invalid_percent(self):
         """Test down_sample raises ValueError for invalid percent."""
@@ -43,6 +47,13 @@ class TestDownSample:
 
         with pytest.raises(ValueError, match='percent must be in the range'):
             tools.down_sample(df, percent=1.5, search_id_column='_id', score_column='score')
+
+    def test_down_sample_pandas_invalid_bucket_size(self):
+        """Test down_sample raises ValueError for invalid bucket_size with pandas."""
+        df = pd.DataFrame({'_id': [1, 2], 'score': [0.1, 0.2]})
+
+        with pytest.raises(ValueError, match='bucket_size must be >= 1000'):
+            tools.down_sample(df, percent=0.5, search_id_column='_id', score_column='score', bucket_size=500)
 
     def test_down_sample_spark(self, spark_session):
         """Test down_sample with Spark DataFrame."""

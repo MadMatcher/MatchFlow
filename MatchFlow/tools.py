@@ -87,48 +87,60 @@ def down_sample(
     Union[pd.DataFrame, SparkDataFrame]
         the down sampled dataset with percent * fvs.count() rows with the same schema as fvs
     """
+    if bucket_size < 1000:
+        raise ValueError('bucket_size must be >= 1000')
+
+    if percent <= 0 or percent > 1.0:
+        raise ValueError('percent must be in the range (0.0, 1.0]')
+
     if isinstance(fvs, pd.DataFrame):
-        if percent <= 0 or percent > 1.0:
-            raise ValueError('percent must be in the range (0.0, 1.0]')
         fvs = fvs.copy()
         total = len(fvs)
         nparts = max(total // bucket_size, 1)
-        fvs["_hash_bucket"] = fvs[search_id_column].astype(str).apply(lambda val: xxhash.xxh64(val).intdigest() % nparts)
-        fvs["_rank_desc"] = fvs.groupby("_hash_bucket")[score_column] \
-            .rank(method="min", ascending=False)
 
-        bucket_sizes = fvs["_hash_bucket"].value_counts().to_dict()
-        fvs["_bucket_size"] = fvs["_hash_bucket"].map(bucket_sizes)
+        sample_size = int(total * percent)
+        n = int(np.ceil((sample_size // 2) / ((nparts * 2) - 1)))
 
-        fvs["_percent_rank"] = fvs.apply(
-            lambda row: 0.0
-            if row["_bucket_size"] == 1
-            else (row["_rank_desc"] - 1) / (row["_bucket_size"] - 1),
-            axis=1,
-        )
-        fvs = fvs[fvs["_percent_rank"] <= percent].copy()
-        fvs = fvs.drop(columns=["_hash_bucket", "_rank_desc", "_bucket_size", "_percent_rank"])
+        fvs['_HASH'] = fvs[search_id_column].astype(str).apply(lambda val: xxhash.xxh64(val).intdigest() % nparts)
+
+        # percent_rank within each hash bucket ordered by score descending
+        fvs['_rank_desc'] = fvs.groupby('_HASH')[score_column].rank(method='min', ascending=False)
+        bucket_sizes = fvs.groupby('_HASH')['_HASH'].transform('count')
+        fvs['_PERCENTILE'] = (fvs['_rank_desc'] - 1) / (bucket_sizes - 1).replace(0, np.nan).fillna(0)
+
+        fvs['_SAMPLE'] = fvs['_PERCENTILE'] <= percent
+
+        # row_number within each (hash, sample) group ordered randomly
+        fvs['_rand'] = np.random.rand(len(fvs))
+        fvs['_ROW_NUM'] = fvs.groupby(['_HASH', '_SAMPLE'])['_rand'].rank(method='first').astype(int)
+
+        fvs = fvs[fvs['_ROW_NUM'] <= n].copy()
+        fvs = fvs.drop(columns=['_HASH', '_rank_desc', '_PERCENTILE', '_SAMPLE', '_rand', '_ROW_NUM'])
 
     elif isinstance(fvs, SparkDataFrame):
-        if percent <= 0 or percent > 1.0:
-            raise ValueError('percent must be in the range (0.0, 1.0]')
-
-        if bucket_size < 1000:
-            raise ValueError('bucket_size must be >= 1000')
-
         if isinstance(score_column, str):
             score_column = F.col(score_column)
 
-        # temp columns for sampling
         percentile_col = '_PERCENTILE'
         hash_col = '_HASH'
+        temp_sample_col = '_SAMPLE'
+        row_num_col = '_ROW_NUM'
 
         window = Window().partitionBy(hash_col).orderBy(score_column.desc())
         nparts = max(fvs.count() // bucket_size, 1)
+
+        sample_size = int(fvs.count() * percent)
+        n = int(np.ceil((sample_size // 2) / ((nparts * 2) - 1)))
+
+        window2 = Window().partitionBy([hash_col, temp_sample_col]).orderBy(F.rand())
+
         fvs = fvs.withColumn(hash_col, F.xxhash64(search_id_column) % nparts)\
-                        .select('*', F.percent_rank().over(window).alias(percentile_col))\
-                        .filter(F.col(percentile_col) <= percent)\
-                        .drop(percentile_col, hash_col)
+                  .select('*', F.percent_rank().over(window).alias(percentile_col))\
+                  .withColumn(temp_sample_col, F.when(F.col(percentile_col) <= percent, True).otherwise(False))\
+                  .select('*', F.row_number().over(window2).alias(row_num_col))\
+                  .filter(F.col(row_num_col) <= n)\
+                  .drop(percentile_col, hash_col, temp_sample_col, row_num_col)
+
     return fvs
 
 

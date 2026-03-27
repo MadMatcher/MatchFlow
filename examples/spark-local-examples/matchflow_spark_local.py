@@ -111,7 +111,7 @@ labeled_data = label_data(
    fvs=downsampled_fvs,
    seeds=seeds,
    batch_size=10,
-   max_iter=50
+   max_iter=50,
 )
 
 

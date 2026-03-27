@@ -394,7 +394,7 @@ As discussed earlier, if the candidates set (the output of blocking) is large (e
 
 1. Scans through all rows in 'fvs' and assigns the rows into a set of buckets, using a hash function on the values of 'search_id_column'. The number of buckets depends on how many rows are in 'fvs' and 'bucket_size'.
 2. Within each bucket, rows are ranked by their score in 'score_column' (highest first). Rows that rank in the top 'percent' of their bucket are flagged as likely samples.
-3. Within each group of flagged and non-flagged rows per bucket, the function randomly selects up to a capped number of rows. This cap is computed from 'percent' and the number of buckets, ensuring the final sample is close to the desired size.
+3. Within each group of flagged and non-flagged rows per bucket, the function randomly selects up to _n_ rows, where _n = ceil((sample_size / 2) / (num_buckets * 2 - 1))_ and _sample_size = total_rows * percent_. This cap ensures the final sample is close to the desired size.
 4. The function returns the union of all selected rows as the desired sample.
 
 Intuitively, the sample draws from both high-scoring rows (likely matches) and lower-scoring rows within each bucket. This ensures the sample contains a reasonable number of matches while also including non-matches, which is important for effective downstream training. The above function may perform Steps 1-4 using Spark to save time.

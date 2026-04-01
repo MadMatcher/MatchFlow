@@ -1223,7 +1223,7 @@ class PhoneNumberFeature(Featurizer):
 
 ### Best Practices
 
-We end the guide by sharing some simple tips for starting a new mathing project:
+We end the guide by sharing some simple tips for starting a new matching project:
 
 1. **Understand Your Data**
 

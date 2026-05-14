@@ -1,5 +1,7 @@
 ## MatchFlow: A Library for Composing Matching Workflows
 
+Maintained by MadMatcher LLC. See [PROVENANCE.md](PROVENANCE.md) for provenance details.
+
 MatchFlow is an open-source library for the matching step of entity matching (EM).
 
 Matching two tables A and B is typically done in two stages. First, a _blocking step_ uses fast heuristics to identify candidate tuple pairs that are likely to match, often using tools such as Sparkly or Delex. Second, a _matching step_ examines these candidate pairs more carefully—using more expensive computation—to determine whether they are true matches.
@@ -14,7 +16,7 @@ MatchFlow focuses on this second stage. It provides a machine-learning–based s
 
 ### How MatchFlow Works
 
-Let C be the output of blocking on tables A and B (using a blocking solution such as [Sparkly](https://github.com/anhaidgroup/sparkly) or [Delex](https://github.com/anhaidgroup/delex)). Let D be the training data—a set of tuple pairs labeled as match or no-match.
+Let C be the output of blocking on tables A and B (using a blocking solution such as [Sparkly](https://github.com/MadMatcher/sparkly) or [Delex](https://github.com/MadMatcher/delex)). Let D be the training data—a set of tuple pairs labeled as match or no-match.
 
 Using MatchFlow, users typically execute the following workflows:
 
@@ -59,4 +61,4 @@ See the [MatchFlow technical guide](https://github.com/MadMatcher/MatchFlow/blob
 
 ### Further Pointers
 
-See [API documentation](https://madmatcher.github.io/MatchFlow). For questions / comments, contact [our research group](mailto:entitymatchinginfo@gmail.com).
+See [API documentation](https://madmatcher.github.io/MatchFlow). For questions / comments, contact [MadMatcher](mailto:dev@hellomadmatcher.com).

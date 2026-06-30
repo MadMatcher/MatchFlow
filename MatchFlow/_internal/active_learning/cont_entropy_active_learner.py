@@ -94,11 +94,18 @@ class ContinuousEntropyActiveLearner:
     
     def _label_everything(self, fvs):
         spark = SparkSession.builder.getOrCreate()
+        # Derive the schema from the source feature vectors (extended with the
+        # columns we add) so createDataFrame never has to infer the
+        # feature_vectors type -- mirrors the schema reuse in _training_loop.
+        schema = T.StructType(list(fvs.schema.fields) + [
+            T.StructField('label', T.DoubleType()),
+            T.StructField('labeled_in_iteration', T.DoubleType()),
+        ])
         batch = fvs.toPandas()
         batch['label'] = batch[['id1', 'id2']].apply(lambda x: float(self._labeler(*x.values)), axis=1)
-        batch['labeled_in_iteration'] = -2
+        batch['labeled_in_iteration'] = -2.0
         self.local_training_fvs_ = batch
-        training_fvs = spark.createDataFrame(self.local_training_fvs_)
+        training_fvs = spark.createDataFrame(self.local_training_fvs_, schema=schema)
 
         self._model.train(training_fvs, 'feature_vectors', 'label')
         return copy(self._model)

@@ -286,7 +286,7 @@ class ContinuousEntropyActiveLearner:
                         break
 
                 self.local_training_fvs_ = self.local_training_fvs_.dropna(subset=['label'])
-                training_fvs = spark.createDataFrame(self.local_training_fvs_)
+                training_fvs = spark.createDataFrame(self.local_training_fvs_, schema=schema)
                 # final train model
                 self._model.train(training_fvs, 'feature_vectors', 'label')
         except Exception as e:

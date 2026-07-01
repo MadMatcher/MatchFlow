@@ -14,6 +14,9 @@ import shutil
 import textwrap
 import pandas as pd
 import os
+import atexit
+import signal
+import socket
 import threading
 import logging
 import tempfile
@@ -408,6 +411,8 @@ class WebUILabeler(Labeler):
         self._setup_flask_routes()
         self._flask_thread = None
         self._streamlit_proc = None
+        self._app_path = None
+        self._cleaned_up = False
         self._server_started = False
         self._done = False
         self._done_stopped = False
@@ -454,8 +459,33 @@ class WebUILabeler(Labeler):
                     'n_labeled': self._n_labeled,
                 })
 
+    @staticmethod
+    def _port_in_use(host, port):
+        """Return True if a TCP server is already bound to (host, port)."""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            try:
+                sock.bind((host, port))
+                return False
+            except OSError:
+                return True
+
     def _ensure_server_started(self):
         if not self._server_started:
+            # Fail fast with an actionable message if a previous run left a
+            # server holding one of the ports (e.g. after a crash).
+            for name, host, port in (
+                ('Flask', self._flask_host, self._flask_port),
+                ('Streamlit', '127.0.0.1', self._streamlit_port),
+            ):
+                if self._port_in_use(host, port):
+                    raise RuntimeError(
+                        f"{name} port {port} is already in use. A previous "
+                        f"labeling session may still be running. Stop it "
+                        f"(e.g. `lsof -ti tcp:{port} | xargs kill`), or pass a "
+                        f"different port to WebUILabeler."
+                    )
+
             log = logging.getLogger('werkzeug')
             log.setLevel(logging.ERROR)
             self._flask_thread = threading.Thread(
@@ -468,9 +498,16 @@ class WebUILabeler(Labeler):
             app_code = self._streamlit_app_code()
             with tempfile.NamedTemporaryFile('w', delete=False, suffix='.py') as f:
                 f.write(app_code)
-                app_path = f.name
-            streamlit_cmd = ["streamlit", "run", app_path, "--server.port", str(self._streamlit_port), "--server.headless", "true"]
-            self._streamlit_proc = subprocess.Popen(streamlit_cmd, env=os.environ.copy())
+                self._app_path = f.name
+            streamlit_cmd = ["streamlit", "run", self._app_path, "--server.port", str(self._streamlit_port), "--server.headless", "true"]
+            # start_new_session=True puts Streamlit (and any children it spawns)
+            # in its own process group so we can reliably kill the whole tree.
+            self._streamlit_proc = subprocess.Popen(
+                streamlit_cmd, env=os.environ.copy(), start_new_session=True
+            )
+            # Ensure the subprocess is torn down even if the caller crashes or
+            # exits without calling finish(), so the port is not left occupied.
+            atexit.register(self._cleanup)
             self._server_started = True
             time.sleep(2)
 
@@ -511,11 +548,46 @@ class WebUILabeler(Labeler):
             self._done_stopped = stopped
             self._n_labeled = n_labeled
 
+        # Give the UI a moment to render the final "complete"/"stopped" message
+        # before tearing the Streamlit subprocess down.
         if self._streamlit_proc is not None:
             time.sleep(2)
-            self._streamlit_proc.kill()
-            self._streamlit_proc.wait()
-            self._streamlit_proc = None
+        self._cleanup()
+
+    def _cleanup(self):
+        """Terminate the Streamlit subprocess and remove the temp app file.
+
+        Idempotent and safe to call from finish() or an atexit handler, so the
+        UI process is not left running (holding its port) if the caller crashes.
+        """
+        if self._cleaned_up:
+            return
+        self._cleaned_up = True
+
+        proc = self._streamlit_proc
+        if proc is not None and proc.poll() is None:
+            try:
+                # Kill the whole process group created via start_new_session so
+                # any child processes Streamlit spawned are cleaned up too.
+                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+            except (ProcessLookupError, PermissionError, OSError):
+                proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+                except (ProcessLookupError, PermissionError, OSError):
+                    proc.kill()
+                proc.wait()
+        self._streamlit_proc = None
+
+        if self._app_path is not None:
+            try:
+                os.unlink(self._app_path)
+            except OSError:
+                pass
+            self._app_path = None
 
     def _get_row(self, df, row_id):
         """Fetch a single row from a DataFrame as a dict."""

@@ -1,0 +1,47 @@
+/* MadMatcher brand tokens for the Furo theme.
+ *
+ * Values are taken verbatim from the live site CSS (madmatcher.ai):
+ *   --red        #c5050c   accent / links / brand
+ *   --red-dark   #9e040a   hover / active
+ *   --ink        #1d1d1f   primary text
+ *   --ink-soft   #424245   secondary text
+ *   --bg         #ffffff   light background
+ *   --bg-soft    #f6f6f7   light secondary background
+ *   --bg-ink     #161617   dark base background
+ *   --line       #e7e7ea   borders
+ * Fonts: Inter (body), JetBrains Mono (code) -- loaded via Google Fonts in
+ * conf.py's html_css_files; system fallbacks apply offline.
+ *
+ * The brand-primary / brand-content / background variables are set in conf.py's
+ * html_theme_options (light and dark). This file carries the remaining tokens
+ * that Furo does not expose through those two dictionaries.
+ */
+
+:root {
+  --font-stack: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-stack--monospace: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+body {
+  /* Hover/active accent, from the site's --red-dark. */
+  --color-brand-visited: #9e040a;
+}
+
+/* Light mode: secondary text + borders from the brand neutrals. */
+body:not([data-theme="dark"]) {
+  --color-foreground-secondary: #424245;
+  --color-foreground-muted: #6e6e73;
+  --color-background-border: #e7e7ea;
+}
+
+/* Dark mode: keep the near-black brand base readable. */
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme="light"]) {
+    --color-foreground-secondary: #c7c7cc;
+    --color-background-border: #2a2a2c;
+  }
+}
+body[data-theme="dark"] {
+  --color-foreground-secondary: #c7c7cc;
+  --color-background-border: #2a2a2c;
+}

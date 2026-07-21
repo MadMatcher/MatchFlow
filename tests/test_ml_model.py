@@ -4,8 +4,9 @@ This module wraps MLModel abstractions and model utilities.
 import pytest
 import numpy as np
 import pandas as pd
+import pyspark.sql.functions as F
 from pyspark.sql.types import ArrayType, DoubleType, FloatType
-from pyspark.ml.linalg import Vectors, VectorUDT
+from pyspark.ml.linalg import Vectors, VectorUDT, DenseVector
 from pyspark.ml.classification import GBTClassifier
 from MatchFlow._internal.ml_model import (
     MLModel,
@@ -13,6 +14,8 @@ from MatchFlow._internal.ml_model import (
     SparkMLModel,
     convert_to_vector,
     convert_to_array,
+    make_training_schema,
+    to_spark_training_fvs,
 )
 
 
@@ -130,6 +133,79 @@ class TestConvertHelpers:
         assert isinstance(
             result.schema["features"].dataType.elementType, FloatType
         )
+
+
+class TestTrainingFvsHelpers:
+    """Tests for the schema helpers used by active learning."""
+
+    def test_make_training_schema(self, fvs_df):
+        """Schema comes from the fvs, with the label columns appended."""
+        columns = ["_id", "id1", "id2", "feature_vectors", "label", "labeled_in_iteration"]
+        schema = make_training_schema(fvs_df, columns)
+
+        # the fvs fields keep their order, the label columns go on the end
+        fvs_fields = [c for c in fvs_df.columns if c in columns]
+        assert schema.names == fvs_fields + ["label", "labeled_in_iteration"]
+        # 'score' is in fvs_df but not in the training data, so it is left out
+        assert "score" not in schema.names
+        assert isinstance(schema["labeled_in_iteration"].dataType, DoubleType)
+
+    def test_make_training_schema_no_duplicate_label_cols(self, fvs_df):
+        """A label column already on the fvs is not added twice."""
+        fvs = fvs_df.withColumn("labeled_in_iteration", F.lit(0))
+        schema = make_training_schema(fvs, fvs.columns + ["label"])
+
+        assert schema.names.count("labeled_in_iteration") == 1
+        assert isinstance(schema["labeled_in_iteration"].dataType, DoubleType)
+
+    def test_to_spark_training_fvs_mixed_representations(self, spark_session, fvs_df):
+        """Vectors and lists in one column, against a vector schema.
+
+        This is what active learning ends up with when a spark model is used:
+        seeds are still lists while the selected batches come back from
+        toPandas as DenseVectors.
+        """
+        schema = make_training_schema(
+            convert_to_vector(fvs_df, "feature_vectors"),
+            ["_id", "id1", "id2", "feature_vectors", "label", "labeled_in_iteration"],
+        )
+        pdf = pd.DataFrame({
+            "_id": [0, 1],
+            "id1": [10, 11],
+            "id2": [20, 21],
+            "feature_vectors": [[0.1, 0.2], Vectors.dense([1.0, 0.5])],
+            "label": [1.0, 0.0],
+            # written as an int by the batch learner, the schema says double
+            "labeled_in_iteration": [-1, 0],
+            # not part of the schema, must be dropped rather than shifting the
+            # columns out of alignment
+            "entropy": [0.9, 0.8],
+        })
+
+        result = to_spark_training_fvs(spark_session, pdf, schema)
+
+        assert isinstance(result.schema["feature_vectors"].dataType, VectorUDT)
+        assert result.columns == schema.names
+        assert result.count() == 2
+
+    def test_to_spark_training_fvs_array_schema(self, spark_session, fvs_df):
+        """The same frame against an array schema, as sklearn models use."""
+        schema = make_training_schema(
+            fvs_df, ["_id", "id1", "id2", "feature_vectors", "label", "labeled_in_iteration"]
+        )
+        pdf = pd.DataFrame({
+            "_id": [0, 1],
+            "id1": [10, 11],
+            "id2": [20, 21],
+            "feature_vectors": [[0.1, 0.2], Vectors.dense([1.0, 0.5])],
+            "label": [1.0, 0.0],
+            "labeled_in_iteration": [-1.0, 0.0],
+        })
+
+        result = to_spark_training_fvs(spark_session, pdf, schema)
+
+        assert isinstance(result.schema["feature_vectors"].dataType, ArrayType)
+        assert result.count() == 2
 
 
 class TestSKLearnModel:
@@ -539,20 +615,28 @@ class TestSKLearnModel:
     def test_convert_to_vector_pandas(self):
         """Test convert_to_vector with pandas DataFrame."""
         df = pd.DataFrame({
-            'features': [[1.0, 2.0], [3.0, 4.0]]
+            'features': [[1.0, 2.0], np.array([3.0, 4.0]), Vectors.dense([5.0, 6.0])]
         })
         result = convert_to_vector(df, 'features')
         assert isinstance(result, pd.DataFrame)
-        assert 'features' in result.columns
+        assert all(isinstance(v, DenseVector) for v in result['features'])
+        assert list(result['features'].iloc[0]) == [1.0, 2.0]
+        # the input must not be modified in place
+        assert isinstance(df['features'].iloc[0], list)
 
     def test_convert_to_array_pandas(self):
         """Test convert_to_array with pandas DataFrame."""
         df = pd.DataFrame({
-            'features': [[1.0, 2.0], [3.0, 4.0]]
+            'features': [[1.0, 2.0], np.array([3.0, 4.0]), Vectors.dense([5.0, 6.0])]
         })
         result = convert_to_array(df, 'features')
         assert isinstance(result, pd.DataFrame)
-        assert 'features' in result.columns
+        # spark's schema verifier rejects numpy scalars, so the values have to
+        # come back as native python floats
+        for v in result['features']:
+            assert isinstance(v, list)
+            assert all(type(x) is float for x in v)
+        assert result['features'].iloc[2] == [5.0, 6.0]
 
     def test_predict_pandas(self, spark_session):
         """Test predict with pandas DataFrame."""

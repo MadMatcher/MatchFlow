@@ -79,6 +79,43 @@ class TestEntropyActiveLearner:
         assert trained_existing is not None
         assert "labeled_in_iteration" in learner_existing.local_training_fvs_.columns
 
+    def test_train_spark_model(self, spark_session, temp_dir: Path, spark_model, seed_df, fvs_df):
+        """Ensure active learning works with a spark model, not just sklearn.
+
+        Spark models turn feature_vectors into a vector column, so the batches
+        selected during active learning come back as DenseVectors while the
+        seeds are still plain lists. Both have to end up in the same spark
+        DataFrame, which only works if the schema is taken from the prepped fvs
+        rather than inferred from the seeds.
+        """
+        gold_df = spark_session.createDataFrame([{"id1": 10, "id2": 20}, {"id1": 12, "id2": 22}])
+        labeler = GoldLabeler(gold_df)
+        parquet_path = temp_dir / "ent_spark_training.parquet"
+
+        learner = EntropyActiveLearner(spark_model, labeler, batch_size=1, max_iter=3, parquet_file_path=str(parquet_path))
+        labeled = learner.train(fvs_df, seed_df)
+
+        # more than one iteration must have run, the second one is where the
+        # seed vectors and the selected vectors first share a DataFrame
+        assert labeled["labeled_in_iteration"].max() >= 1.0
+        # feature vectors come back as plain lists of floats, same as sklearn
+        vec = labeled["feature_vectors"].iloc[-1]
+        assert isinstance(vec, list)
+        assert all(type(x) is float for x in vec)
+
+    def test_train_spark_model_existing_data(self, spark_session, temp_dir: Path, spark_model, seed_df, fvs_df):
+        """Ensure the resume-from-parquet path works with a spark model."""
+        gold_df = spark_session.createDataFrame([{"id1": 10, "id2": 20}, {"id1": 12, "id2": 22}])
+        labeler = GoldLabeler(gold_df)
+        parquet_path = temp_dir / "ent_spark_existing.parquet"
+
+        learner = EntropyActiveLearner(spark_model, labeler, batch_size=1, max_iter=3, parquet_file_path=str(parquet_path))
+        learner.train(fvs_df, seed_df)
+
+        resumed = learner.train(fvs_df, seed_df)
+        assert resumed is not None
+        assert "labeled_in_iteration" in learner.local_training_fvs_.columns
+
     def test_train_label_everything(self, spark_session, temp_dir: Path, default_model, seed_df, fvs_df):
         """Ensure label-everything path is exercised."""
         gold_df = spark_session.createDataFrame([{"id1": 10, "id2": 20}, {"id1": 12, "id2": 22}])

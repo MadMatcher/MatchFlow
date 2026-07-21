@@ -86,6 +86,26 @@ class TestContinuousEntropyActiveLearner:
             assert set(["_id", "id1", "id2", "feature_vectors", "label"]).issubset(parquet_df.columns)
             assert parquet_df["label"].isin([0.0, 1.0]).all()
 
+    def test_train_spark_model(self, spark_session, temp_dir: Path, spark_model, seed_df, fvs_df):
+        """Verify train works with a spark model, whose feature vectors are
+        DenseVectors rather than the plain lists the seeds start out as."""
+        gold_df = spark_session.createDataFrame([{"id1": 10, "id2": 20}, {"id1": 12, "id2": 22}, {"id1": 13, "id2": 23}])
+        labeler = GoldLabeler(gold_df)
+        parquet_path = temp_dir / "cont_spark_training.parquet"
+
+        learner = ContinuousEntropyActiveLearner(
+            spark_model, labeler, queue_size=3, max_labeled=3, on_demand_stop=False, parquet_file_path=str(parquet_path)
+        )
+
+        labeled = learner.train(fvs_df, seed_df)
+        assert labeled is not None
+        # entropy is only used to order the queue, it must not leak into the
+        # training data or the data handed back to the caller
+        assert "entropy" not in labeled.columns
+        vec = labeled["feature_vectors"].iloc[-1]
+        assert isinstance(vec, list)
+        assert all(type(x) is float for x in vec)
+
     def test_train_existing_data(self, spark_session, temp_dir: Path, default_model, seed_df, fvs_df):
         """Ensure existing parquet data path is used."""
         gold_df = spark_session.createDataFrame([{"id1": 10, "id2": 20}, {"id1": 12, "id2": 22}, {"id1": 13, "id2": 23}])

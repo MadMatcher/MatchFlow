@@ -10,7 +10,7 @@ import pyspark.sql.functions as F
 from pyspark.sql.types import StructType, StructField, DoubleType
 import pyspark.sql.types as T
 from pyspark.ml.functions import vector_to_array, array_to_vector
-from pyspark.ml.linalg import VectorUDT
+from pyspark.ml.linalg import VectorUDT, Vectors, DenseVector, SparseVector
 from pyspark.sql import DataFrame as SparkDataFrame, SparkSession
 from pyspark.ml import Transformer
 import numpy as np
@@ -222,14 +222,14 @@ class MLModel(ABC):
             DataFrame with prepared feature vectors
         """
         if isinstance(fvs, pd.DataFrame):
-            if self.nan_fill is not None:
+            if self.nan_fill is not None and len(fvs) > 0:
                 fvs = fvs.copy()
                 feature_data = fvs[feature_col]
                 if hasattr(feature_data.iloc[0], '__iter__') and not isinstance(feature_data.iloc[0], str):
                     filled_features = []
                     for feature in feature_data:
-                        if isinstance(feature, (list, np.ndarray)):
-                            feature_array = np.array(feature)
+                        if isinstance(feature, (list, np.ndarray, DenseVector, SparseVector)):
+                            feature_array = np.asarray(_to_float_list(feature))
                             feature_array = np.nan_to_num(feature_array, nan=self.nan_fill)
                             filled_features.append(feature_array)
                         else:
@@ -237,7 +237,12 @@ class MLModel(ABC):
                     fvs[feature_col] = filled_features
                 else:
                     fvs[feature_col] = fvs[feature_col].fillna(self.nan_fill)
-        
+
+            if self.use_vectors:
+                fvs = convert_to_vector(fvs, feature_col)
+            else:
+                fvs = convert_to_array(fvs, feature_col)
+
         elif isinstance(fvs, SparkDataFrame):
             if self.nan_fill is not None:
                 fvs = fvs.withColumn(feature_col, F.transform(feature_col, lambda x : F.when(x.isNotNull() & ~F.isnan(x), x).otherwise(self.nan_fill)))
@@ -272,16 +277,40 @@ def convert_to_vector(df, col):
         DataFrame with the column converted to vector format
     """
     if isinstance(df, pd.DataFrame):
-        if col in df.columns:
-            return df
-        else:
+        if col not in df.columns:
             raise ValueError(f"Column '{col}' not found in DataFrame")
+        df = df.copy()
+        df[col] = df[col].map(_to_dense_vector)
+        return df
     elif isinstance(df, SparkDataFrame):
         if not isinstance(df.schema[col].dataType, VectorUDT):
             df = df.withColumn(col, array_to_vector(col))
         return df
     else:
         raise TypeError(f"Unsupported DataFrame type: {type(df)}")
+
+def _to_dense_vector(v):
+    """
+    convert a single feature vector to a pyspark DenseVector, leaving nulls
+    and vectors that are already in the right format alone
+    """
+    if v is None or (isinstance(v, float) and np.isnan(v)):
+        return None
+    if isinstance(v, (DenseVector, SparseVector)):
+        return v
+    return Vectors.dense(np.asarray(v, dtype=np.float64))
+
+def _to_float_list(v):
+    """
+    convert a single feature vector to a list of native python floats. numpy
+    scalars are not accepted by spark's schema verifier, and ndarray.tolist()
+    is what unboxes them
+    """
+    if v is None or (isinstance(v, float) and np.isnan(v)):
+        return None
+    if isinstance(v, (DenseVector, SparseVector)):
+        v = v.toArray()
+    return np.asarray(v, dtype=np.float64).tolist()
 
 _DOUBLE_ARRAY = T.ArrayType(T.DoubleType())
 _FLOAT_ARRAY = T.ArrayType(T.FloatType())
@@ -303,16 +332,96 @@ def convert_to_array(df, col):
         DataFrame with the column converted to array format
     """
     if isinstance(df, pd.DataFrame):
-        if col in df.columns:
-            return df
-        else:
+        if col not in df.columns:
             raise ValueError(f"Column '{col}' not found in DataFrame")
+        df = df.copy()
+        df[col] = df[col].map(_to_float_list)
+        return df
     elif isinstance(df, SparkDataFrame):
         if df.schema[col].dataType not in _ARRAY_TYPES:
             df = df.withColumn(col, vector_to_array(col))
         return df
     else:
         raise TypeError(f"Unsupported DataFrame type: {type(df)}")
+
+
+def make_training_schema(fvs, columns, label_cols=('label', 'labeled_in_iteration')):
+    """Build the spark schema for the local (pandas) training feature vectors.
+
+    The schema is taken from `fvs` -- which has already been through
+    `MLModel.prep_fvs` -- rather than inferred from the pandas DataFrame, so
+    that `feature_vectors` is declared with the type the model actually uses
+    (VectorUDT for spark models, array<float/double> for sklearn models).
+
+    Parameters
+    ----------
+    fvs : pyspark.sql.DataFrame
+        the prepped feature vectors that the training data is drawn from
+    columns : iterable of str
+        the columns of the local training DataFrame, only fvs fields that
+        appear here are included
+    label_cols : tuple of str
+        the label columns added during active learning, appended as doubles
+
+    Returns
+    -------
+    pyspark.sql.types.StructType
+    """
+    columns = set(columns)
+    fields = [f for f in fvs.schema.fields if f.name in columns and f.name not in label_cols]
+    fields += [T.StructField(c, T.DoubleType(), True) for c in label_cols]
+
+    return T.StructType(fields)
+
+
+def _unbox(v):
+    return v.item() if isinstance(v, np.generic) else v
+
+
+def to_spark_training_fvs(spark, pdf, schema, feature_col='feature_vectors'):
+    """Create a spark DataFrame from the local (pandas) training feature vectors.
+
+    `spark.createDataFrame` matches the columns of a pandas DataFrame to the
+    fields of an explicit schema *by position* and then verifies each value
+    with a strict `type(obj) in (float,)` style check, so the DataFrame has to
+    be lined up with the schema first. This
+
+    * reindexes the columns to the schema's fields (dropping extras),
+    * puts `feature_col` in the representation the schema declares,
+    * and replaces numpy scalars with the python types spark accepts.
+
+    Parameters
+    ----------
+    spark : pyspark.sql.SparkSession
+    pdf : pandas.DataFrame
+        the local training feature vectors
+    schema : pyspark.sql.types.StructType
+        the schema from `make_training_schema`
+    feature_col : str
+        name of the column containing feature vectors
+
+    Returns
+    -------
+    pyspark.sql.DataFrame
+    """
+    pdf = pdf.reindex(columns=[f.name for f in schema.fields])
+
+    if isinstance(schema[feature_col].dataType, VectorUDT):
+        pdf = convert_to_vector(pdf, feature_col)
+    else:
+        pdf = convert_to_array(pdf, feature_col)
+
+    for field in schema.fields:
+        if field.name == feature_col:
+            continue
+        # labels are written as both ints and floats during active learning,
+        # DoubleType only accepts floats
+        if isinstance(field.dataType, (T.DoubleType, T.FloatType)):
+            pdf[field.name] = pdf[field.name].astype('float64')
+        elif pdf[field.name].dtype == object:
+            pdf[field.name] = pdf[field.name].map(_unbox)
+
+    return spark.createDataFrame(pdf, schema=schema)
 
 class SKLearnModel(MLModel):
     """Scikit-learn model wrapper.

@@ -91,6 +91,19 @@ def default_model():
 
 
 @pytest.fixture
+def spark_model():
+    """Return a SparkMLModel for active learning tests.
+
+    Spark models use vector feature columns rather than arrays, which is the
+    representation active learning has to keep consistent.
+    """
+    from MatchFlow._internal.ml_model import SparkMLModel
+    from pyspark.ml.classification import RandomForestClassifier
+
+    return SparkMLModel(RandomForestClassifier, numTrees=5, maxDepth=3, seed=42)
+
+
+@pytest.fixture
 def seed_df() -> pd.DataFrame:
     """Return a default seed DataFrame for active learning tests."""
     return pd.DataFrame(

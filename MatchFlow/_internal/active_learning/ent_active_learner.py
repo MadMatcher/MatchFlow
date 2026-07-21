@@ -12,7 +12,7 @@ import pyspark.sql.types as T
 from copy import deepcopy, copy
 from ..utils import persisted, get_logger, repartition_df, type_check, save_training_data_streaming, load_training_data_streaming, adjust_iterations_for_existing_data
 from ..labeler import Labeler, WebUILabeler
-from ..ml_model import MLModel, SKLearnModel, convert_to_array, convert_to_vector
+from ..ml_model import MLModel, SKLearnModel, convert_to_array, convert_to_vector, make_training_schema, to_spark_training_fvs
 from pyspark.ml.functions import vector_to_array, array_to_vector
 import pyspark
 from math import ceil
@@ -80,21 +80,18 @@ class EntropyActiveLearner:
     
     def _label_everything(self, fvs):
         spark = SparkSession.builder.getOrCreate()
-        # Derive the schema from the source feature vectors (extended with the
-        # columns we add) so createDataFrame never has to infer the
-        # feature_vectors type.
-        schema = T.StructType(list(fvs.schema.fields) + [
-            T.StructField('label', T.DoubleType()),
-            T.StructField('labeled_in_iteration', T.DoubleType()),
-        ])
         batch = fvs.toPandas()
         batch['label'] = batch[['id1', 'id2']].apply(lambda x: float(self._labeler(*x.values)), axis=1)
         batch['labeled_in_iteration'] = -2.0
         self.local_training_fvs_ = batch
-        training_fvs = spark.createDataFrame(self.local_training_fvs_, schema=schema)
+        # Derive the schema from the source feature vectors (extended with the
+        # columns we add) so createDataFrame never has to infer the
+        # feature_vectors type.
+        schema = make_training_schema(fvs, batch.columns)
+        training_fvs = to_spark_training_fvs(spark, self.local_training_fvs_, schema)
 
         self._model.train(training_fvs, 'feature_vectors', 'label')
-        return self.local_training_fvs_
+        return convert_to_array(self.local_training_fvs_, 'feature_vectors')
     
     def _prep_fvs(self, fvs):
         # fvs(_id, id1, id2, features)
@@ -135,7 +132,19 @@ class EntropyActiveLearner:
                 self.local_training_fvs_ = seeds.copy()
                 # Save initial seeds
                 save_training_data_streaming(self.local_training_fvs_, self._parquet_file_path, log)
-            
+
+            # The seeds (and anything loaded back from parquet) come from the
+            # unprepped fvs, so their feature vectors have to be put into the
+            # representation the model uses before they can share a column with
+            # the vectors selected during active learning.
+            self.local_training_fvs_ = self._model.prep_fvs(self.local_training_fvs_)
+            # seed feature vectors
+            self.local_training_fvs_['labeled_in_iteration'] = -1.0
+            # Derive the schema from the prepped feature vectors instead of
+            # inferring it from pandas, so feature_vectors is always declared
+            # with the type the model actually uses.
+            schema = make_training_schema(fvs, self.local_training_fvs_.columns)
+
             # Calculate adjusted iterations based on existing data
             #max_itr = adjust_iterations_for_existing_data(
             #    len(self.local_training_fvs_), n_fvs, self._batch_size, self._max_iter)
@@ -152,18 +161,12 @@ class EntropyActiveLearner:
             # Train initial model with existing data
             if existing_training_data is not None:
                 log.info('Training initial model with existing data')
-                initial_training_fvs = spark.createDataFrame(self.local_training_fvs_)\
+                initial_training_fvs = to_spark_training_fvs(spark, self.local_training_fvs_, schema)\
                                            .repartition(len(self.local_training_fvs_) // 100 + 1, '_id')\
                                            .persist()
                 self._model.train(initial_training_fvs, 'feature_vectors', 'label')
                 initial_training_fvs.unpersist()
                 log.info('Initial model training complete')
-            else:
-                self.local_training_fvs_ = seeds.copy()
-                
-            # seed feature vectors
-            self.local_training_fvs_['labeled_in_iteration'] = -1
-            schema = spark.createDataFrame(self.local_training_fvs_).schema
 
             total_pos, total_neg = self._get_pos_negative(self.local_training_fvs_)
             if total_pos == 0 or total_neg == 0:
@@ -180,7 +183,7 @@ class EntropyActiveLearner:
                 log.info(f'starting iteration {i}')
                 # train model
                 log.info('training model')
-                training_fvs = spark.createDataFrame(self.local_training_fvs_, schema=schema)\
+                training_fvs = to_spark_training_fvs(spark, self.local_training_fvs_, schema)\
                                     .repartition(len(self.local_training_fvs_) // 100 + 1, '_id')\
                                     .persist()
 
@@ -214,7 +217,7 @@ class EntropyActiveLearner:
                 new_labeled_batch = new_labeled_batch.loc[labeled_indices].copy()
                 new_labeled_batch['label'] = labels
                 new_labeled_batch = new_labeled_batch[(new_labeled_batch['label'] == 0.0) | (new_labeled_batch['label'] == 1.0)]
-                new_labeled_batch['labeled_in_iteration'] = i
+                new_labeled_batch['labeled_in_iteration'] = float(i)
 
                 pos, neg = self._get_pos_negative(new_labeled_batch)
                 total_pos += pos
@@ -233,7 +236,9 @@ class EntropyActiveLearner:
                     break
                 i += 1
 
-        labeled_data = self.local_training_fvs_.dropna(subset=['label']).copy()
+        # hand back plain lists of floats so callers get the same thing back
+        # regardless of which kind of model was used
+        labeled_data = convert_to_array(self.local_training_fvs_.dropna(subset=['label']), 'feature_vectors')
         if isinstance(self._labeler, WebUILabeler):
             log.warning("Active learning is complete.")
         return labeled_data

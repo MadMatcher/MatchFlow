@@ -15,7 +15,7 @@ import pyspark.sql.types as T
 from copy import deepcopy, copy
 from ..utils import persisted, get_logger, repartition_df, type_check, save_training_data_streaming, load_training_data_streaming, adjust_labeled_examples_for_existing_data
 from ..labeler import Labeler, WebUILabeler
-from ..ml_model import MLModel, SKLearnModel, convert_to_array, convert_to_vector
+from ..ml_model import MLModel, SKLearnModel, convert_to_array, convert_to_vector, make_training_schema, to_spark_training_fvs
 from pyspark.ml.functions import vector_to_array, array_to_vector
 from queue import PriorityQueue, Queue, Empty
 from threading import Thread, Event
@@ -94,18 +94,15 @@ class ContinuousEntropyActiveLearner:
     
     def _label_everything(self, fvs):
         spark = SparkSession.builder.getOrCreate()
-        # Derive the schema from the source feature vectors (extended with the
-        # columns we add) so createDataFrame never has to infer the
-        # feature_vectors type -- mirrors the schema reuse in _training_loop.
-        schema = T.StructType(list(fvs.schema.fields) + [
-            T.StructField('label', T.DoubleType()),
-            T.StructField('labeled_in_iteration', T.DoubleType()),
-        ])
         batch = fvs.toPandas()
         batch['label'] = batch[['id1', 'id2']].apply(lambda x: float(self._labeler(*x.values)), axis=1)
         batch['labeled_in_iteration'] = -2.0
         self.local_training_fvs_ = batch
-        training_fvs = spark.createDataFrame(self.local_training_fvs_, schema=schema)
+        # Derive the schema from the source feature vectors (extended with the
+        # columns we add) so createDataFrame never has to infer the
+        # feature_vectors type -- mirrors the schema reuse in _training_loop.
+        schema = make_training_schema(fvs, batch.columns)
+        training_fvs = to_spark_training_fvs(spark, self.local_training_fvs_, schema)
 
         self._model.train(training_fvs, 'feature_vectors', 'label')
         return copy(self._model)
@@ -170,8 +167,7 @@ class ContinuousEntropyActiveLearner:
                     # Check if training thread finished early due to insufficient examples
                     if hasattr(self, 'local_training_fvs_') and self.local_training_fvs_ is not None:
                         # Training thread finished early, return the labeled data
-                        labeled_data = self.local_training_fvs_.dropna(subset=['label']).copy()
-                        return labeled_data
+                        return convert_to_array(self.local_training_fvs_.dropna(subset=['label']), 'feature_vectors')
                     else:
                         raise RuntimeError('label queue is empty by training thread is dead, likely due to an exception during training')
             else:
@@ -190,7 +186,9 @@ class ContinuousEntropyActiveLearner:
         stop_training.set()
         training_thread.join()
 
-        labeled_data = self.local_training_fvs_.dropna(subset=['label']).copy()
+        # hand back plain lists of floats so callers get the same thing back
+        # regardless of which kind of model was used
+        labeled_data = convert_to_array(self.local_training_fvs_.dropna(subset=['label']), 'feature_vectors')
         if isinstance(self._labeler, WebUILabeler):
             log.warning("Active learning is complete.")
         return labeled_data
@@ -212,11 +210,18 @@ class ContinuousEntropyActiveLearner:
                     else:
                         log.info('running al to completion would label everything, but self._terminate_if_label_everything is False so AL will still run')
 
-                self.local_training_fvs_ = seeds.copy()
+                # The seeds (and anything loaded back from parquet) come from
+                # the unprepped fvs, so their feature vectors have to be put
+                # into the representation the model uses before they can share
+                # a column with the vectors selected during active learning.
+                self.local_training_fvs_ = self._model.prep_fvs(seeds.copy())
                 self.local_training_fvs_.set_index('_id', drop=False, inplace=True)
                 # seed feature vectors
                 self.local_training_fvs_['labeled_in_iteration'] = -1.0
-                schema = spark.createDataFrame(self.local_training_fvs_).schema
+                # Derive the schema from the prepped feature vectors instead of
+                # inferring it from pandas, so feature_vectors is always
+                # declared with the type the model actually uses.
+                schema = make_training_schema(fvs, self.local_training_fvs_.columns)
 
                 total_pos, total_neg = self._get_pos_negative(self.local_training_fvs_)
                 if total_pos == 0 or total_neg == 0:
@@ -252,7 +257,7 @@ class ContinuousEntropyActiveLearner:
 
                     # train model
                     #log.info('training model')
-                    training_fvs = spark.createDataFrame(self.local_training_fvs_, schema=schema)\
+                    training_fvs = to_spark_training_fvs(spark, self.local_training_fvs_, schema)\
                                         .repartition(len(self.local_training_fvs_) // 100 + 1, '_id')\
                                         .persist()
 
@@ -275,12 +280,15 @@ class ContinuousEntropyActiveLearner:
                                             .set_index('_id', drop=False)
 
                     new_labeled_batch['label'] = np.nan
-                    self.local_training_fvs_ = pd.concat([self.local_training_fvs_, new_labeled_batch])
+                    # entropy is only used to order the queue, keeping it would
+                    # leave the training data with a column the schema (and the
+                    # data returned to the caller) doesn't have
+                    self.local_training_fvs_ = pd.concat([self.local_training_fvs_, new_labeled_batch.drop(columns='entropy')])
 
                     training_fvs.unpersist()
-                    
+
                     # push examples to the queue to be labeled
-                    for i, r in new_labeled_batch.iterrows():
+                    for _, r in new_labeled_batch.iterrows():
                         ent = r.pop('entropy')
                         to_be_label_queue.put(PQueueItem(ent, r))
 
@@ -293,7 +301,7 @@ class ContinuousEntropyActiveLearner:
                         break
 
                 self.local_training_fvs_ = self.local_training_fvs_.dropna(subset=['label'])
-                training_fvs = spark.createDataFrame(self.local_training_fvs_, schema=schema)
+                training_fvs = to_spark_training_fvs(spark, self.local_training_fvs_, schema)
                 # final train model
                 self._model.train(training_fvs, 'feature_vectors', 'label')
         except Exception as e:
